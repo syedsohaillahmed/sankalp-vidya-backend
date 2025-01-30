@@ -12,5 +12,8 @@
     "backend"
   ],
   "author": "Syed Sohail Ahmed",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
 }
