@@ -1,0 +1,113 @@
+import mongoose, { Schema, model } from "mongoose";
+
+// Define the Students schema
+const studentsSchema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    motherName: {
+      type: String,
+      required: true,
+    },
+    fatherName: {
+      type: String,
+      // required: true,
+    },
+    caste: {
+      casteName: {
+        type: String,
+        // required: true,
+      },
+      category: {
+        type: String,
+        // required: true,
+      },
+      casteCertificateImage: {
+        type: String,
+      },
+    },
+    income: {
+      annualIncome: {
+        type: Number,
+      },
+      currency: {
+        type: String,
+      },
+      currencySymbol: {
+        type: String,
+      },
+      incomeCertificateImage: {
+        type: String,
+      },
+    },
+    gender: {
+      type: String,
+      required: true,
+      enum: ["male", "female", "other", "non-binary", "prefer_not_to_say"], // Expanded gender options
+    },
+    schoolName: {
+      type: String,
+      required: true,
+    },
+    schoolAddress: {
+      street: { type: String },
+      city: { type: String },
+      zipCode: { type: String },
+      state: { type: String },
+      country: { type: String },
+    },
+    // Home Address as a nested object with individual fields
+    homeAddress: {
+      street: { type: String },
+      city: { type: String },
+      zipCode: { type: String },
+      state: { type: String },
+      country: { type: String },
+    },
+    aadharId: {
+      type: String,
+      required: true,
+      unique: true,
+      match: /^[0-9]{12}$/, // Regular expression to ensure aadhar has exactly 12 digits
+    },
+    aadharImage: {
+      type: String, // URL or file path for the Aadhar image
+    },
+    panId: {
+      type: String,
+      // required: true,
+      unique: true,
+    },
+    panImage: {
+      type: String, // URL or file path for the Aadhar image
+    },
+    fathersOccupation: {
+      type: String,
+      required: true,
+    },
+    mothersOccupation: {
+      type: String,
+      required: true,
+    },
+    classGrade: {
+      type: String,
+      required: true,
+    },
+    studentId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    active: {
+      type: Boolean,
+      default:true
+    },
+  },
+  { timestamps: true }
+);
+
+// Create the Students model
+export const Student = model("Student", studentsSchema);
