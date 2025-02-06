@@ -1,5 +1,6 @@
 import mongoose, { Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken"
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 // Define the Users schema
@@ -111,6 +112,33 @@ usersSchema.methods.isPasswordCorrect = async function (password) {
     throw new Error("Error comparing password");
   }
 };
+
+
+usersSchema.methods.generateAccessToken = async function (params) {
+  return await jwt.sign(
+    {
+      _id: this._id
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+    }
+  )
+  
+}
+
+usersSchema.methods.generateRefreshToken = async function (params) {
+  return await jwt.sign(
+    {
+      _id: this._id
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+    }
+  )
+  
+}
 
 // Create the Users model
 export const User = model("User", usersSchema);

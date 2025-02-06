@@ -24,8 +24,17 @@ app.use(
   })
 );
 
-app.use(express.static("public"));
+app.use(express.static("public/temp"));
 
 app.use(cookieParser());
+
+
+
+//routes
+import userRouter from "./routes/user.routes.js"
+
+//routes declaration
+app.use("/user", userRouter)
+
 
 export { app };
