@@ -9,6 +9,7 @@ const usersSchema = new Schema(
     userName: {
       type: String,
       unique: true,
+      sparse: true,
     },
     fullName: {
       type: String,
@@ -18,7 +19,7 @@ const usersSchema = new Schema(
     avatar: {
       type: String,
     },
-    dob: {
+    dateOfBirth: {
       type: Date,
       required: true,
     },
@@ -37,10 +38,14 @@ const usersSchema = new Schema(
     },
     email: {
       type: String,
+      unique: true,
+      sparse: true,
       match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Please enter a valid email address."], // Email regex validation
     },
     rollNo: {
       type: String,
+      unique: true,
+      sparse: true,
       index: true,
     },
     role: {
@@ -50,6 +55,7 @@ const usersSchema = new Schema(
     },
     ratings: {
       type: Number,
+      default:0
     },
     lastLogin: {
       type: Date,
@@ -96,7 +102,7 @@ usersSchema.pre("save", async function (next) {
 
   try {
     // Hash the password before saving
-    this.password = await bcrypt.hash(this.password, parseInt(process.env.PASSWORD_SALT_ROUND, 10));
+    this.password = await bcrypt.hash(this.password, 10);
     next();
   } catch (err) {
     console.log("error while hashing the password")

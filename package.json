@@ -14,6 +14,8 @@
   "author": "Syed Sohail Ahmed",
   "license": "ISC",
   "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.1",
     "prettier": "^3.4.2"
   },
   "dependencies": {
