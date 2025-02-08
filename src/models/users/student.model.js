@@ -10,7 +10,7 @@ const studentsSchema = new Schema(
     },
     motherName: {
       type: String,
-      required: true,
+      // required: true,
     },
     fatherName: {
       type: String,
@@ -45,12 +45,12 @@ const studentsSchema = new Schema(
     },
     gender: {
       type: String,
-      required: true,
+      // required: true,
       enum: ["male", "female", "other", "non-binary", "prefer_not_to_say"], // Expanded gender options
     },
     schoolName: {
       type: String,
-      required: true,
+      // required: true,
     },
     schoolAddress: {
       street: { type: String },
@@ -69,7 +69,7 @@ const studentsSchema = new Schema(
     },
     aadharId: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
       match: /^[0-9]{12}$/, // Regular expression to ensure aadhar has exactly 12 digits
     },
@@ -86,19 +86,19 @@ const studentsSchema = new Schema(
     },
     fathersOccupation: {
       type: String,
-      required: true,
+      // required: true,
     },
     mothersOccupation: {
       type: String,
-      required: true,
+      // required: true,
     },
     classGrade: {
       type: String,
-      required: true,
+      // required: true,
     },
     studentId: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
     },
     active: {

@@ -14,7 +14,7 @@ const employeeSchema = new Schema({
   },
   joiningDate: {
     type: Date,
-    required: true,
+    // required: true,
   },
   exitDate: {
     type: Date,
@@ -23,7 +23,7 @@ const employeeSchema = new Schema({
   active: { type: Boolean, default:true },
   aadharId: {
     type: String,
-    required: true,
+    // required: true,
     unique: true,
     match: /^[0-9]{12}$/, // Regular expression to ensure aadhar has exactly 12 digits
   },
@@ -32,7 +32,7 @@ const employeeSchema = new Schema({
   },
   panId: {
     type: String,
-    required: true,
+    // required: true,
     unique: true,
   },
   panImage: {
