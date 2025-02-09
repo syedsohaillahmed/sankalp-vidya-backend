@@ -103,6 +103,9 @@ const videoSchema = new Schema(
           type: Schema.Types.ObjectId,
           ref: "User",
         },
+        userRole:{
+          type:String
+        },
         watchedAt: { type: Date, default: Date.now },
       },
     ],
