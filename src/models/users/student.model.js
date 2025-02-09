@@ -6,7 +6,7 @@ const studentsSchema = new Schema(
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      // required: true,
     },
     motherName: {
       type: String,
@@ -43,11 +43,7 @@ const studentsSchema = new Schema(
         type: String,
       },
     },
-    gender: {
-      type: String,
-      // required: true,
-      enum: ["male", "female", "other", "non-binary", "prefer_not_to_say"], // Expanded gender options
-    },
+    
     schoolName: {
       type: String,
       // required: true,

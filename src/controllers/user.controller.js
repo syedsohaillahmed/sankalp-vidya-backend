@@ -47,6 +47,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     email,
     rollNo,
     roleId,
+    gender
   } = req.body;
 
   if (!phoneNo || !fullName || !roleId || !dateOfBirth || !password) {
@@ -95,6 +96,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     alternatePhoneNo,
     email,
     rollNo,
+    gender,
     role: roleId,
   });
 try {

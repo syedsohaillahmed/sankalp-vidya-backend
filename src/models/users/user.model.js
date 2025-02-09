@@ -27,6 +27,11 @@ const usersSchema = new Schema(
       type: String,
       required: true,
     },
+    gender: {
+      type: String,
+      required: true,
+      enum: ["male", "female", "other", "non-binary", "prefer_not_to_say"], // Expanded gender options
+    },
     phoneNo: {
       type: String,
       required:[true, "Phone number is required"],
