@@ -7,6 +7,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Student } from "../models/users/student.model.js";
 import { Employee } from "../models/users/employee.model.js";
 import internal from "stream";
+import { Teacher } from "../models/users/Teacher.model.js";
 
 const createUserRoles = asyncHandler(async (req, res, next) => {
   const { roleName, roleId, active } = req.body;
@@ -79,10 +80,10 @@ const registerUser = asyncHandler(async (req, res, next) => {
   ) {
     avatarLocalPath = req?.files?.avatar[0]?.path;
   }
-
+console.log("roleId", roleId)
   const roleData = await UserRole.findById(roleId);
 
-  console.log("roleData", roleData?._id);
+  console.log("roleData", roleData);
 
   uploadedAvatar = await uploadOnCloudinary(avatarLocalPath);
 
@@ -106,7 +107,7 @@ try {
         userId: createdUser._id,
       });
     } else if (roleData?.roleName === "teacher") {
-      await Employee.create({
+      await Teacher.create({
         userId: createdUser._id,
       });
     }

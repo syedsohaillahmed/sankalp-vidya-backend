@@ -89,8 +89,8 @@ const studentsSchema = new Schema(
       // required: true,
     },
     classGrade: {
-      type: String,
-      // required: true,
+      type: mongoose.Types.ObjectId,
+      ref: "Class"
     },
     studentId: {
       type: String,

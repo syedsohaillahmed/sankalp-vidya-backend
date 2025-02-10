@@ -1,5 +1,6 @@
 import mongoose, { Schema, model } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import { type } from "os";
 
 const videoSchema = new Schema(
   {
@@ -28,9 +29,9 @@ const videoSchema = new Schema(
       type: Number,
       min: [1, "Rating must be at least 1."],
       max: [5, "Rating must be at most 5."],
-      default:null
+      default: null,
     },
-    videoRemarks: [
+    videoComments: [
       {
         videoComment: {
           type: String,
@@ -45,7 +46,7 @@ const videoSchema = new Schema(
         },
       },
     ],
-    videoQuality: [
+    videoQualityRemarks: [
       {
         QAVideoComment: {
           type: String,
@@ -83,6 +84,9 @@ const videoSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    videoUnPublishedDate: {
+      type: date,
+    },
     author: {
       authorName: {
         type: String,
@@ -103,8 +107,8 @@ const videoSchema = new Schema(
           type: Schema.Types.ObjectId,
           ref: "User",
         },
-        userRole:{
-          type:String
+        userRole: {
+          type: String,
         },
         watchedAt: { type: Date, default: Date.now },
       },
@@ -115,6 +119,6 @@ const videoSchema = new Schema(
   }
 );
 
-videoSchema.plugin(mongooseAggregatePaginate)
+videoSchema.plugin(mongooseAggregatePaginate);
 
 export const Video = model("Video", videoSchema);
