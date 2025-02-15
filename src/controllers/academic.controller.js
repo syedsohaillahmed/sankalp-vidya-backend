@@ -3,17 +3,74 @@ import { ApiError } from "../utils/ApiError.js";
 import { Subject } from "../models/academic/subjects/subjects.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Class } from "../models/academic/class/class.model.js";
+import { AcademicYear } from "../models/academic/academicYear/academicYear.model.js";
+
+const createAcademicYear = asyncHandler(async (req, res, next) => {
+  const { academicYear, batchCode, batchName, startDate, endDate, active } =
+    req.body;
+  if (!academicYear || academicYear.trim() === "") {
+    throw new ApiError(400, "Academic year is Required");
+  }
+
+  if (!startDate) {
+    throw new ApiError(400, "Start Date  is Required");
+  }
+
+  const postedAcademicYear = await AcademicYear.create({
+    academicYear,
+    batchCode,
+    batchName,
+    startDate,
+    endDate,
+    active,
+  });
+
+  const createdAcademicyear = await AcademicYear.findOne(
+    postedAcademicYear._id
+  );
+
+  if (!createdAcademicyear) {
+    throw new ApiError(400, "failed to create Academic year", {});
+  }
+  console.log(createdAcademicyear);
+
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(201, createdAcademicyear, "subject name is required")
+    );
+});
+
+const getAllAcademicYear = asyncHandler(async (req, res, next) => {
+  const academicYear = await AcademicYear.find();
+  if (!academicYear) {
+    throw new ApiError(500, "something went wrong");
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        academicYear,
+        "academic year data fetched sucessfully"
+      )
+    );
+});
 
 const addSubjects = asyncHandler(async (req, res, next) => {
-  const { name,classGrade, description, board, subjectType, category, active } = req.body;
+  const {
+    name,
+    classGrade,
+    description,
+    board,
+    subjectType,
+    category,
+    active,
+  } = req.body;
   console.log("name", name);
 
   if (!name) {
     throw new ApiError(401, "subject name is required", {});
-  }
-
-  if (!classGrade) {
-    throw new ApiError(401, "class Grade name is required", {});
   }
 
   const createdSubject = await Subject.create({
@@ -23,7 +80,6 @@ const addSubjects = asyncHandler(async (req, res, next) => {
     board,
     category,
     active,
-    classGrade
   });
 
   const subjectData = await Subject.findById(createdSubject._id);
@@ -79,4 +135,11 @@ const getAllClass = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, allClasses, "fetched class data successfully"));
 });
 
-export { addSubjects, getAllSubjects, createClass, getAllClass };
+export {
+  createAcademicYear,
+  addSubjects,
+  getAllSubjects,
+  createClass,
+  getAllClass,
+  getAllAcademicYear,
+};

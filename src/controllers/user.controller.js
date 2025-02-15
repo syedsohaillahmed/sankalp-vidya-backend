@@ -48,7 +48,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     email,
     rollNo,
     roleId,
-    gender
+    gender,
   } = req.body;
 
   if (!phoneNo || !fullName || !roleId || !dateOfBirth || !password) {
@@ -80,10 +80,8 @@ const registerUser = asyncHandler(async (req, res, next) => {
   ) {
     avatarLocalPath = req?.files?.avatar[0]?.path;
   }
-console.log("roleId", roleId)
-  const roleData = await UserRole.findById(roleId);
 
-  console.log("roleData", roleData);
+  const roleData = await UserRole.findById(roleId);
 
   uploadedAvatar = await uploadOnCloudinary(avatarLocalPath);
 
@@ -100,8 +98,7 @@ console.log("roleId", roleId)
     gender,
     role: roleId,
   });
-try {
-  
+  try {
     if (roleData?.roleName === "student") {
       await Student.create({
         userId: createdUser._id,
@@ -111,10 +108,9 @@ try {
         userId: createdUser._id,
       });
     }
-} catch (error) {
-  throw new ApiError(500, "internal server error while regestering the user")
-  
-}
+  } catch (error) {
+    throw new ApiError(500, "internal server error while regestering the user");
+  }
 
   const userData = await User.findById(createdUser._id).select(
     "-password -refreshToken"
@@ -124,13 +120,9 @@ try {
     throw new ApiError(500, "Something Went Wrong while registering user");
   }
 
-  res.status(201).json(
-    new ApiResponse(
-      201,
-       userData,
-      "User Registerd Sucessfuly"
-    )
-  );
+  res
+    .status(201)
+    .json(new ApiResponse(201, userData, "User Registerd Sucessfuly"));
 });
 
 const generateAccessAndRefreshToken = async (userId) => {

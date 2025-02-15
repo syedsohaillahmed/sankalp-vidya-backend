@@ -18,15 +18,14 @@ const subjectSchema = new Schema(
         category:{
             type:String
         },
-        classGrade:{
-            type: Schema.Types.ObjectId,
-            ref: "Class",
-            required:true
-        },
+        
         active:{
             type:Boolean,
             default:true
         }
+    },
+    {
+        timeStamps:true
     }
 )
 

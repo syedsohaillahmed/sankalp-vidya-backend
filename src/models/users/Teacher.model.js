@@ -6,16 +6,8 @@ const TeacherSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "User",
   },
-  assignedSubjects:[
-    {type:mongoose.Types.ObjectId,
-      ref:"Subject"
-    }
-  ],
-  assignedClasses:[
-    {type:mongoose.Types.ObjectId,
-      ref:"Class"
-    }
-  ],
+  assignedSubjects: [{ type: mongoose.Types.ObjectId, ref: "Subject" }],
+  assignedClasses: [{ type: mongoose.Types.ObjectId, ref: "Class" }],
   homeAddress: {
     street: { type: String },
     city: { type: String },
@@ -30,8 +22,12 @@ const TeacherSchema = new Schema({
   exitDate: {
     type: Date,
   },
+  academicYear: {
+    type: mongoose.Types.ObjectId,
+    ref: "AcademicYear",
+  },
 
-  active: { type: Boolean, default:true },
+  active: { type: Boolean, default: true },
   aadharId: {
     type: String,
     // required: true,

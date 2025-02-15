@@ -22,6 +22,9 @@ const classSchema = new Schema({
     type: Boolean,
     default: true,
   },
+},
+{
+  timestamps:true
 });
 
 export const Class = model("Class", classSchema) 

@@ -43,7 +43,7 @@ const studentsSchema = new Schema(
         type: String,
       },
     },
-    
+
     schoolName: {
       type: String,
       // required: true,
@@ -90,8 +90,28 @@ const studentsSchema = new Schema(
     },
     classGrade: {
       type: mongoose.Types.ObjectId,
-      ref: "Class"
+      ref: "Class",
     },
+    academicYear:{
+      type: mongoose.Types.ObjectId,
+      ref:"AcademicYear"
+    },
+    subjectsEnrolled: [
+      {
+        subjectId: {
+          type: mongoose.Types.ObjectId,
+          ref: "Subject", 
+        },
+        name: {
+          type: String,
+        },
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
     studentId: {
       type: String,
       // required: true,
@@ -99,7 +119,7 @@ const studentsSchema = new Schema(
     },
     active: {
       type: Boolean,
-      default:true
+      default: true,
     },
   },
   { timestamps: true }
