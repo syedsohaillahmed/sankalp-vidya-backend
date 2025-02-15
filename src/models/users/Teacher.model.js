@@ -1,4 +1,5 @@
 import mongoose, { Schema, Types, model } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { type } from "os";
 
 const TeacherSchema = new Schema({
@@ -82,5 +83,7 @@ const TeacherSchema = new Schema({
     },
   },
 });
+
+TeacherSchema.plugin(mongooseAggregatePaginate);
 
 export const Teacher = model("Teacher", TeacherSchema);

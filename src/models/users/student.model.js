@@ -1,4 +1,5 @@
 import mongoose, { Schema, model } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 // Define the Students schema
 const studentsSchema = new Schema(
@@ -124,6 +125,8 @@ const studentsSchema = new Schema(
   },
   { timestamps: true }
 );
+
+studentsSchema.plugin(mongooseAggregatePaginate);
 
 // Create the Students model
 export const Student = model("Student", studentsSchema);

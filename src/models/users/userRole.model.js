@@ -1,4 +1,5 @@
 import mongoose, { Schema, model } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 // Define the UserRoles schema
 const userRoleSchema = new Schema({
   roleName: {
@@ -17,5 +18,7 @@ const userRoleSchema = new Schema({
     default:true
   }
 });
+
+userRoleSchema.plugin(mongooseAggregatePaginate);
 
 export const UserRole = model("UserRole", userRoleSchema);

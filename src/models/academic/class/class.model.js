@@ -1,4 +1,5 @@
 import { model, Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { type } from "os";
 
 const classSchema = new Schema({
@@ -26,5 +27,7 @@ const classSchema = new Schema({
 {
   timestamps:true
 });
+
+classSchema.plugin(mongooseAggregatePaginate);
 
 export const Class = model("Class", classSchema) 

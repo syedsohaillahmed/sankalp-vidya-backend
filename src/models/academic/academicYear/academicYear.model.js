@@ -1,4 +1,5 @@
 import { model, Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const academicYearSchema = new Schema(
   {
@@ -30,5 +31,7 @@ const academicYearSchema = new Schema(
     timestamps: true,
   }
 );
+
+academicYearSchema.plugin(mongooseAggregatePaginate);
 
 export const AcademicYear = model("AcademicYear", academicYearSchema);
