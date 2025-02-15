@@ -229,4 +229,96 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User Logged out Sucessfully"));
 });
 
-export { registerUser, createUserRoles, getUserRoles, loginUser, logoutUser };
+
+const updateStudentDetails = asyncHandler(async (req, res, next) => {
+
+  try {
+    const studentId = req.params.id; // Assuming you're getting the student ID in the URL params
+    const updateData = req.body; // The data to update is in the request body
+
+    if(!studentId){
+      throw new ApiError(400, "student id is required")
+    }
+
+    // Map the incoming data to match the schema fields
+    const mappedData = {};
+
+    // Mapping fields from the request body to schema
+    if (updateData.motherName) mappedData.motherName = updateData.motherName;
+    if (updateData.fatherName) mappedData.fatherName = updateData.fatherName;
+    
+    // Mapping the caste object (nested fields)
+    if (updateData.caste) {
+      mappedData.caste = {
+        casteName: updateData.caste.casteName || undefined,
+        category: updateData.caste.category || undefined,
+        casteCertificateImage: updateData.caste.casteCertificateImage || undefined,
+      };
+    }
+    
+    // Mapping the income object (nested fields)
+    if (updateData.income) {
+      mappedData.income = {
+        annualIncome: updateData.income.annualIncome || undefined,
+        currency: updateData.income.currency || undefined,
+        currencySymbol: updateData.income.currencySymbol || undefined,
+        incomeCertificateImage: updateData.income.incomeCertificateImage || undefined,
+      };
+    }
+
+    // Other fields
+    if (updateData.schoolName) mappedData.schoolName = updateData.schoolName;
+    if (updateData.schoolAddress) {
+      mappedData.schoolAddress = {
+        street: updateData.schoolAddress.street || undefined,
+        city: updateData.schoolAddress.city || undefined,
+        zipCode: updateData.schoolAddress.zipCode || undefined,
+        state: updateData.schoolAddress.state || undefined,
+        country: updateData.schoolAddress.country || undefined,
+      };
+    }
+
+    // Home Address (nested object)
+    if (updateData.homeAddress) {
+      mappedData.homeAddress = {
+        street: updateData.homeAddress.street || undefined,
+        city: updateData.homeAddress.city || undefined,
+        zipCode: updateData.homeAddress.zipCode || undefined,
+        state: updateData.homeAddress.state || undefined,
+        country: updateData.homeAddress.country || undefined,
+      };
+    }
+
+    // Other fields like Aadhar, PAN, Occupation, etc.
+    if (updateData.aadharId) mappedData.aadharId = updateData.aadharId;
+    if (updateData.aadharImage) mappedData.aadharImage = updateData.aadharImage;
+    if (updateData.panId) mappedData.panId = updateData.panId;
+    if (updateData.panImage) mappedData.panImage = updateData.panImage;
+    if (updateData.fathersOccupation) mappedData.fathersOccupation = updateData.fathersOccupation;
+    if (updateData.mothersOccupation) mappedData.mothersOccupation = updateData.mothersOccupation;
+    if (updateData.classGrade) mappedData.classGrade = updateData.classGrade;
+    if (updateData.academicYear) mappedData.academicYear = updateData.academicYear;
+    if (updateData.subjectsEnrolled) mappedData.subjectsEnrolled = updateData.subjectsEnrolled;
+    if (updateData.studentId) mappedData.studentId = updateData.studentId;
+    if (updateData.active !== undefined) mappedData.active = updateData.active;
+
+    // Perform the update operation
+    const updatedStudent = await Student.findByIdAndUpdate(studentId, mappedData, { new: true });
+
+    // Check if the student was found and updated
+    if (!updatedStudent) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Return the updated student details
+    return res.status(200).json(updatedStudent);
+
+  } catch (error) {
+    next(error); // Pass error to the error handler middleware
+  }
+});
+
+export default updateStudentDetails;
+
+
+export { registerUser, createUserRoles, getUserRoles, loginUser, logoutUser, updateStudentDetails };

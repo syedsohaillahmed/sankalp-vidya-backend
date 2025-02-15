@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {registerUser, createUserRoles, getUserRoles, loginUser, logoutUser } from "../controllers/user.controller.js"
+import updateStudentDetails, {registerUser, createUserRoles, getUserRoles, loginUser, logoutUser } from "../controllers/user.controller.js"
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -18,5 +18,9 @@ router.route("/userRole").get(getUserRoles)
 
 router.route("/login").post(loginUser)
 router.route("/logout").post(verifyJWT, logoutUser)
+
+
+router.route("/student/:id").patch( updateStudentDetails);  // Update student details by ID
+
 
 export default router
