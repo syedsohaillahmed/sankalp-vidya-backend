@@ -1,8 +1,7 @@
-import mongoose, { Schema, model } from "mongoose";
+import { model, Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
-import { type } from "os";
 
-const videoSchema = new Schema(
+const videoLiveSessionLinkSchema = new Schema(
   {
     videoName: {
       type: String,
@@ -11,25 +10,23 @@ const videoSchema = new Schema(
     videoThumbnail: {
       type: String,
     },
-    videoFile: {
-      type: String,
-      required: [true, "Video File is Required"],
-    },
     videoDescription: {
       type: String,
     },
-    chapterName: {
+    videoLink: {
       type: String,
-      required: [true, "Chapter name is required."],
+      required: [true, "Video Link is required."],
     },
-    subject: {
+    embededLink: {
+      type: String,
+    },
+    otherLink: {
       type: String,
     },
     rating: {
       type: Number,
       min: [1, "Rating must be at least 1."],
       max: [5, "Rating must be at most 5."],
-      
     },
     videoComments: [
       {
@@ -46,21 +43,6 @@ const videoSchema = new Schema(
         },
       },
     ],
-    videoQualityRemarks: [
-      {
-        QAVideoComment: {
-          type: String,
-        },
-        QACommentedBy: {
-          type: Schema.Types.ObjectId,
-          ref: "User",
-        },
-        QACommentedAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
     likes: {
       type: Number,
       default: 0,
@@ -69,35 +51,24 @@ const videoSchema = new Schema(
       type: Number,
       default: 0,
     },
-    videoDuration: {
-      type: Number,
+    startDate: {
+      type: Date,
     },
-    videoType: {
-      type: String,
+    endDate: {
+      type: Date,
     },
-
-    views: {
-      type: Number,
-      default: 0,
+    endTime: {
+      type: Date,
     },
     active: {
       type: Boolean,
       default: true,
     },
-    videoUnPublishedDate: {
-      type: date,
+    class: {
+      type: Schema.Types.ObjectId,
+      ref: "Class",
     },
-    author: {
-      authorName: {
-        type: String,
-      },
-      authorID: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        default: null,
-      },
-    },
-    uploadedBy: {
+    videoLinkCreatedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
@@ -113,24 +84,21 @@ const videoSchema = new Schema(
         watchedAt: { type: Date, default: Date.now },
       },
     ],
-    class:{
+    subject: {
       type: Schema.Types.ObjectId,
-        ref: "Class",
+      ref: "Subject",
     },
-    subject:{
+    academicYear: {
       type: Schema.Types.ObjectId,
-        ref: "Subject",
-    },
-    academicYear:{
-      type: Schema.Types.ObjectId,
-        ref: "AcademicYear",
+      ref: "AcademicYear",
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-videoSchema.plugin(mongooseAggregatePaginate);
+videoLiveSessionLinkSchema.plugin(mongooseAggregatePaginate);
 
-export const Video = model("Video", videoSchema);
+export const VideoLiveSessionLink = model(
+  "VideoLiveSessionLink",
+  videoLiveSessionLinkSchema
+);
