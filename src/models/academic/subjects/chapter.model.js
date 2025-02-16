@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { type } from "os";
+
 
 const chapterSchema = new Schema(
   {
@@ -68,4 +68,4 @@ const chapterSchema = new Schema(
   }
 );
 
-export const Chapter = model("Subject", chapterSchema);
+export const Chapter = model("Chapter", chapterSchema);
