@@ -42,7 +42,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     userName,
     fullName,
     dateOfBirth,
-    password,
+    userPassword,
     phoneNo,
     alternatePhoneNo,
     email,
@@ -51,7 +51,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     gender,
   } = req.body;
 
-  if (!phoneNo || !fullName || !roleId || !dateOfBirth || !password) {
+  if (!phoneNo || !fullName || !roleId || !dateOfBirth || !userPassword) {
     throw new ApiError(
       400,
       "Bad Request: phoneNo, fullName, role, date of birth, and password are required"
@@ -91,38 +91,33 @@ const registerUser = asyncHandler(async (req, res, next) => {
     avatar: uploadedAvatar?.url || "",
     dateOfBirth,
     phoneNo,
-    password,
+    password: userPassword,
     alternatePhoneNo,
     email,
     rollNo,
     gender,
     role: roleId,
   });
-  try {
-    if (roleData?.roleName === "student") {
-      await Student.create({
-        userId: createdUser._id,
-      });
-    } else if (roleData?.roleName === "teacher") {
-      await Teacher.create({
-        userId: createdUser._id,
-      });
-    }
-  } catch (error) {
-    throw new ApiError(500, "internal server error while regestering the user");
-  }
 
-  const userData = await User.findById(createdUser._id).select(
-    "-password -refreshToken"
-  );
-
-  if (!userData) {
+  if (!createdUser) {
     throw new ApiError(500, "Something Went Wrong while registering user");
   }
 
+  if (roleData?.roleName === "student") {
+    const createdStudent = await Student.create({
+      userId: createdUser._id,
+    });
+  } else if (roleData?.roleName === "teacher") {
+    const createdTeacher = await Teacher.create({
+      userId: createdUser._id,
+    });
+  }
+
+  const { password, refreshToken, ...userResponse } = createdUser.toObject();
+
   res
     .status(201)
-    .json(new ApiResponse(201, userData, "User Registerd Sucessfuly"));
+    .json(new ApiResponse(201, userResponse, "User Registerd Sucessfuly"));
 });
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -147,8 +142,6 @@ const generateAccessAndRefreshToken = async (userId) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { phoneNo, email, rollNo, password } = req.body;
 
-  console.log(phoneNo, email, rollNo, password);
-
   if (!phoneNo && !email && !rollNo && !password) {
     throw new ApiError(400, "USer Details are required");
   }
@@ -166,10 +159,6 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!validPassword) {
     throw new ApiError(401, "Bad Credentials");
   }
-
-  console.log("validPassword", validPassword);
-
-  console.log("userdata", userData);
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     userData._id
@@ -202,8 +191,6 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  console.log("from logout router", req.user);
-
   const updatedData = await User.findByIdAndUpdate(
     req.user._id,
     {
@@ -216,7 +203,6 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
   );
 
-  console.log("updated data", updatedData);
   const options = {
     httpOnly: true,
     secure: true,
@@ -229,96 +215,105 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User Logged out Sucessfully"));
 });
 
-
 const updateStudentDetails = asyncHandler(async (req, res, next) => {
+  const studentId = req.params.id;
+  const updateData = req.body;
 
-  try {
-    const studentId = req.params.id; // Assuming you're getting the student ID in the URL params
-    const updateData = req.body; // The data to update is in the request body
-
-    if(!studentId){
-      throw new ApiError(400, "student id is required")
-    }
-
-    // Map the incoming data to match the schema fields
-    const mappedData = {};
-
-    // Mapping fields from the request body to schema
-    if (updateData.motherName) mappedData.motherName = updateData.motherName;
-    if (updateData.fatherName) mappedData.fatherName = updateData.fatherName;
-    
-    // Mapping the caste object (nested fields)
-    if (updateData.caste) {
-      mappedData.caste = {
-        casteName: updateData.caste.casteName || undefined,
-        category: updateData.caste.category || undefined,
-        casteCertificateImage: updateData.caste.casteCertificateImage || undefined,
-      };
-    }
-    
-    // Mapping the income object (nested fields)
-    if (updateData.income) {
-      mappedData.income = {
-        annualIncome: updateData.income.annualIncome || undefined,
-        currency: updateData.income.currency || undefined,
-        currencySymbol: updateData.income.currencySymbol || undefined,
-        incomeCertificateImage: updateData.income.incomeCertificateImage || undefined,
-      };
-    }
-
-    // Other fields
-    if (updateData.schoolName) mappedData.schoolName = updateData.schoolName;
-    if (updateData.schoolAddress) {
-      mappedData.schoolAddress = {
-        street: updateData.schoolAddress.street || undefined,
-        city: updateData.schoolAddress.city || undefined,
-        zipCode: updateData.schoolAddress.zipCode || undefined,
-        state: updateData.schoolAddress.state || undefined,
-        country: updateData.schoolAddress.country || undefined,
-      };
-    }
-
-    // Home Address (nested object)
-    if (updateData.homeAddress) {
-      mappedData.homeAddress = {
-        street: updateData.homeAddress.street || undefined,
-        city: updateData.homeAddress.city || undefined,
-        zipCode: updateData.homeAddress.zipCode || undefined,
-        state: updateData.homeAddress.state || undefined,
-        country: updateData.homeAddress.country || undefined,
-      };
-    }
-
-    // Other fields like Aadhar, PAN, Occupation, etc.
-    if (updateData.aadharId) mappedData.aadharId = updateData.aadharId;
-    if (updateData.aadharImage) mappedData.aadharImage = updateData.aadharImage;
-    if (updateData.panId) mappedData.panId = updateData.panId;
-    if (updateData.panImage) mappedData.panImage = updateData.panImage;
-    if (updateData.fathersOccupation) mappedData.fathersOccupation = updateData.fathersOccupation;
-    if (updateData.mothersOccupation) mappedData.mothersOccupation = updateData.mothersOccupation;
-    if (updateData.classGrade) mappedData.classGrade = updateData.classGrade;
-    if (updateData.academicYear) mappedData.academicYear = updateData.academicYear;
-    if (updateData.subjectsEnrolled) mappedData.subjectsEnrolled = updateData.subjectsEnrolled;
-    if (updateData.studentId) mappedData.studentId = updateData.studentId;
-    if (updateData.active !== undefined) mappedData.active = updateData.active;
-
-    // Perform the update operation
-    const updatedStudent = await Student.findByIdAndUpdate(studentId, mappedData, { new: true });
-
-    // Check if the student was found and updated
-    if (!updatedStudent) {
-      return res.status(404).json({ message: "Student not found" });
-    }
-
-    // Return the updated student details
-    return res.status(200).json(updatedStudent);
-
-  } catch (error) {
-    next(error); // Pass error to the error handler middleware
+  if (!studentId) {
+    throw new ApiError(400, "student id is required");
   }
+
+  // Map the incoming data to match the schema fields
+  const mappedData = {};
+
+  // Mapping fields from the request body to schema
+  if (updateData.motherName) mappedData.motherName = updateData.motherName;
+  if (updateData.fatherName) mappedData.fatherName = updateData.fatherName;
+
+  // Mapping the caste object (nested fields)
+  if (updateData.caste) {
+    mappedData.caste = {
+      casteName: updateData.caste.casteName || undefined,
+      category: updateData.caste.category || undefined,
+      casteCertificateImage:
+        updateData.caste.casteCertificateImage || undefined,
+    };
+  }
+
+  // Mapping the income object (nested fields)
+  if (updateData.income) {
+    mappedData.income = {
+      annualIncome: updateData.income.annualIncome || undefined,
+      currency: updateData.income.currency || undefined,
+      currencySymbol: updateData.income.currencySymbol || undefined,
+      incomeCertificateImage:
+        updateData.income.incomeCertificateImage || undefined,
+    };
+  }
+
+  // Other fields
+  if (updateData.schoolName) mappedData.schoolName = updateData.schoolName;
+  if (updateData.schoolAddress) {
+    mappedData.schoolAddress = {
+      street: updateData.schoolAddress.street || undefined,
+      city: updateData.schoolAddress.city || undefined,
+      zipCode: updateData.schoolAddress.zipCode || undefined,
+      state: updateData.schoolAddress.state || undefined,
+      country: updateData.schoolAddress.country || undefined,
+    };
+  }
+
+  // Home Address (nested object)
+  if (updateData.homeAddress) {
+    mappedData.homeAddress = {
+      street: updateData.homeAddress.street || undefined,
+      city: updateData.homeAddress.city || undefined,
+      zipCode: updateData.homeAddress.zipCode || undefined,
+      state: updateData.homeAddress.state || undefined,
+      country: updateData.homeAddress.country || undefined,
+    };
+  }
+
+  // Other fields like Aadhar, PAN, Occupation, etc.
+  if (updateData.aadharId) mappedData.aadharId = updateData.aadharId;
+  if (updateData.aadharImage) mappedData.aadharImage = updateData.aadharImage;
+  if (updateData.panId) mappedData.panId = updateData.panId;
+  if (updateData.panImage) mappedData.panImage = updateData.panImage;
+  if (updateData.fathersOccupation)
+    mappedData.fathersOccupation = updateData.fathersOccupation;
+  if (updateData.mothersOccupation)
+    mappedData.mothersOccupation = updateData.mothersOccupation;
+  if (updateData.classGrade) mappedData.classGrade = updateData.classGrade;
+  if (updateData.academicYear)
+    mappedData.academicYear = updateData.academicYear;
+  if (updateData.subjectsEnrolled)
+    mappedData.subjectsEnrolled = updateData.subjectsEnrolled;
+  if (updateData.studentId) mappedData.studentId = updateData.studentId;
+  if (updateData.active !== undefined) mappedData.active = updateData.active;
+
+  // Perform the update operation
+  const updatedStudent = await Student.findByIdAndUpdate(
+    studentId,
+    mappedData,
+    { new: true }
+  );
+
+  // Check if the student was found and updated
+  if (!updatedStudent) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+
+  // Return the updated student details
+  return res
+    .status(200)
+    .json(new ApiResponse(201, updatedStudent, "Updated Student Details"));
 });
 
-export default updateStudentDetails;
-
-
-export { registerUser, createUserRoles, getUserRoles, loginUser, logoutUser, updateStudentDetails };
+export {
+  registerUser,
+  createUserRoles,
+  getUserRoles,
+  loginUser,
+  logoutUser,
+  updateStudentDetails,
+};

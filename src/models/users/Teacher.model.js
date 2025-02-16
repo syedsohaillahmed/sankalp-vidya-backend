@@ -31,17 +31,19 @@ const TeacherSchema = new Schema({
   active: { type: Boolean, default: true },
   aadharId: {
     type: String,
-    // required: true,
     unique: true,
     match: /^[0-9]{12}$/, // Regular expression to ensure aadhar has exactly 12 digits
+    sparse: true,
+
   },
   aadharImage: {
     type: String, // URL or file path for the Aadhar image
   },
   panId: {
     type: String,
-    // required: true,
     unique: true,
+    sparse: true,
+
   },
   panImage: {
     type: String, // URL or file path for the Aadhar image

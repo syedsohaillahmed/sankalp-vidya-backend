@@ -27,6 +27,8 @@ const employeeSchema = new Schema({
     // required: true,
     unique: true,
     match: /^[0-9]{12}$/, // Regular expression to ensure aadhar has exactly 12 digits
+    sparse: true,
+
   },
   aadharImage: {
     type: String, // URL or file path for the Aadhar image
@@ -35,6 +37,8 @@ const employeeSchema = new Schema({
     type: String,
     // required: true,
     unique: true,
+    sparse: true,
+
   },
   panImage: {
     type: String, // URL or file path for the Aadhar image

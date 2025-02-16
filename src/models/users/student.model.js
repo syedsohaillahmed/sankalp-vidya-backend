@@ -68,6 +68,8 @@ const studentsSchema = new Schema(
       type: String,
       // required: true,
       unique: true,
+      sparse: true,
+
       match: /^[0-9]{12}$/, // Regular expression to ensure aadhar has exactly 12 digits
     },
     aadharImage: {
@@ -77,6 +79,8 @@ const studentsSchema = new Schema(
       type: String,
       // required: true,
       unique: true,
+      sparse: true,
+
     },
     panImage: {
       type: String, // URL or file path for the Aadhar image
@@ -117,6 +121,8 @@ const studentsSchema = new Schema(
       type: String,
       // required: true,
       unique: true,
+      sparse: true,
+
     },
     active: {
       type: Boolean,
