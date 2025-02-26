@@ -140,7 +140,10 @@ const generateAccessAndRefreshToken = async (userId) => {
 };
 
 const loginUser = asyncHandler(async (req, res) => {
+  console.log("request", req.body);
   const { phoneNo, email, rollNo, password } = req.body;
+
+  console.log(phoneNo, password);
 
   if (!phoneNo && !email && !rollNo && !password) {
     throw new ApiError(400, "USer Details are required");
@@ -167,6 +170,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const loggedInuser = await User.findById(userData._id).select(
     "-password -refreshToken"
   );
+  
 
   const options = {
     httpOnly: true,
@@ -213,6 +217,21 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User Logged out Sucessfully"));
+});
+
+const getUserDetails = asyncHandler(async (req, res) => {
+
+  console.log("request coming here")
+  const userId = req.params.id;
+  if (!userId) {
+    throw new ApiError(400, "student id is required");
+  }
+
+  const userDetails = await User.findById(id).select("-password, -refreshToken");
+  console.log("userDetails", userDetails);
+  return res.status(200).json({
+    message: "request recieved successfully",
+  });
 });
 
 const updateStudentDetails = asyncHandler(async (req, res, next) => {
@@ -316,4 +335,5 @@ export {
   loginUser,
   logoutUser,
   updateStudentDetails,
+  getUserDetails
 };

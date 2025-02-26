@@ -1,6 +1,6 @@
 import mongoose, { Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 // Define the Users schema
@@ -34,7 +34,7 @@ const usersSchema = new Schema(
     },
     phoneNo: {
       type: String,
-      required:[true, "Phone number is required"],
+      required: [true, "Phone number is required"],
       match: [/^\d{10}$/, "Alternate phone number must be 10 digits."], // Validate alternate phone number
     },
     alternatePhoneNo: {
@@ -45,7 +45,10 @@ const usersSchema = new Schema(
       type: String,
       unique: true,
       sparse: true,
-      match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Please enter a valid email address."], // Email regex validation
+      match: [
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        "Please enter a valid email address.",
+      ], // Email regex validation
     },
     rollNo: {
       type: String,
@@ -60,7 +63,7 @@ const usersSchema = new Schema(
     },
     ratings: {
       type: Number,
-      default:0
+      default: 0,
     },
     lastLogin: {
       type: Date,
@@ -110,46 +113,39 @@ usersSchema.pre("save", async function (next) {
     this.password = await bcrypt.hash(this.password, 10);
     next();
   } catch (err) {
-    console.log("error while hashing the password")
+    console.log("error while hashing the password");
     next(err); // Pass the error to the next middleware if there is an issue
   }
 });
 
 // Method to check if the password is correct
 usersSchema.methods.isPasswordCorrect = async function (password) {
-  console.log("password",password)
-  console.log("this password",this.password)
-  
-    return await bcrypt.compare(password, this.password);
-  
+  return await bcrypt.compare(password, this.password);
 };
-
 
 usersSchema.methods.generateAccessToken = async function (params) {
   return await jwt.sign(
     {
-      _id: this._id
+      _id: this._id,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     }
-  )
-  
-}
+  );
+};
 
 usersSchema.methods.generateRefreshToken = async function (params) {
   return await jwt.sign(
     {
-      _id: this._id
+      _id: this._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     }
-  )
-  
-}
+  );
+};
 
 // Create the Users model
 export const User = model("User", usersSchema);
