@@ -170,7 +170,6 @@ const loginUser = asyncHandler(async (req, res) => {
   const loggedInuser = await User.findById(userData._id).select(
     "-password -refreshToken"
   );
-  
 
   const options = {
     httpOnly: true,
@@ -185,7 +184,7 @@ const loginUser = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         {
-          user: userData,
+          user: loggedInuser,
           refreshToken,
           accessToken,
         },
@@ -220,18 +219,24 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const getUserDetails = asyncHandler(async (req, res) => {
-
-  console.log("request coming here")
+  console.log("request coming here");
   const userId = req.params.id;
   if (!userId) {
     throw new ApiError(400, "student id is required");
   }
 
-  const userDetails = await User.findById(id).select("-password, -refreshToken");
+  const userDetails = await User.findById(userId).select(
+    "-password, -refreshToken"
+  );
+  if (!userDetails) {
+    throw new ApiError(400, "no user found");
+  }
   console.log("userDetails", userDetails);
-  return res.status(200).json({
-    message: "request recieved successfully",
-  });
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, userDetails, "User Details fetched Successfully")
+    );
 });
 
 const updateStudentDetails = asyncHandler(async (req, res, next) => {
@@ -335,5 +340,5 @@ export {
   loginUser,
   logoutUser,
   updateStudentDetails,
-  getUserDetails
+  getUserDetails,
 };
