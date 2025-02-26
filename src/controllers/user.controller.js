@@ -271,9 +271,10 @@ const getUserDetails = asyncHandler(async (req, res) => {
     throw new ApiError(400, "no user found");
   }
 
+  console.log("userDetails", userDetails)
   const roleDetails = await UserRole.findById(userDetails?.role);
   const userDetailsWithRole = {
-    ...userDetails,
+    userDetails,
     roleDisplayName: roleDetails.roleDisplayName,
   };
   return res
@@ -285,6 +286,64 @@ const getUserDetails = asyncHandler(async (req, res) => {
         "User Details fetched Successfully"
       )
     );
+});
+
+const updateUserDetailsById = asyncHandler(async (req, res) => {
+  const { fullName, dateOfBirth, gender, alternatePhoneNo, email } = req.body;
+
+  const userId = req.params.id;
+
+  if (!userId) {
+    throw new ApiError(401, "User id is Required");
+  }
+
+  // Check if required fields are present
+
+  // Validate email format (simple regex check)
+  if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+    throw new ApiError(400, "Invalid email format");
+  }
+
+  // Validate date of birth (make sure it's a valid date)
+  if (dateOfBirth && isNaN(new Date(dateOfBirth).getTime())) {
+    throw new ApiError(400, "Invalid date of birth format");
+  }
+
+  // Validate alternatePhoneNo (must be exactly 10 digits)
+  if (alternatePhoneNo && !/^\d{10}$/.test(alternatePhoneNo)) {
+    throw new ApiError(400, "Alternate phone number must be exactly 10 digits");
+  }
+
+  const userData = await User.findById(userId);
+  if (!userData) {
+    throw new ApiError(401, "Not a valid user");
+  }
+
+  if (fullName) {
+    if (fullName.trim() === "" || fullName === null || fullName === undefined) {
+      throw new ApiError(400, "FullName cant be empty");
+    }
+    userData.fullName = fullName;
+  }
+  if (dateOfBirth) {
+    if (
+      dateOfBirth.trim() === "" ||
+      dateOfBirth === null ||
+      dateOfBirth === undefined
+    ) {
+      throw new ApiError(400, "Date of Birth cant be empty");
+    }
+    userData.dateOfBirth = dateOfBirth;
+  }
+  if (gender) userData.gender = gender;
+  if (alternatePhoneNo) userData.alternatePhoneNo = alternatePhoneNo;
+  if (email) userData.email = email;
+
+  await userData.save();
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, userData, "updated data successfully"));
 });
 
 const updateStudentDetails = asyncHandler(async (req, res, next) => {
@@ -390,4 +449,5 @@ export {
   updateStudentDetails,
   getUserDetails,
   updateUserRoleById,
+  updateUserDetailsById,
 };
