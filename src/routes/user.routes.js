@@ -7,6 +7,7 @@ import {
   logoutUser,
   updateStudentDetails,
   getUserDetails,
+  updateUserRoleById,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -25,6 +26,8 @@ router.route("/register").post(
 );
 router.route("/userRole").post(createUserRoles);
 router.route("/userRole").get(getUserRoles);
+router.route("/userRole/:id").put(updateUserRoleById);
+
 
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);

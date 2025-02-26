@@ -8,6 +8,9 @@ const userRoleSchema = new Schema({
     unique: true, // Ensure role names are unique
     enum: ["teacher", "student", "systemadmin"], // Restrict to specific roles
   },
+  roleDisplayName:{
+    type: String,
+  },
   roleId: {
     type: String,
     required: true,

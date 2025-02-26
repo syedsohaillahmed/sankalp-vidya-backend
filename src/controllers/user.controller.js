@@ -37,6 +37,44 @@ const getUserRoles = asyncHandler(async (req, res, next) => {
   });
 });
 
+const updateUserRoleById = asyncHandler(async (req, res) => {
+  const roleId = req.params.id;
+
+  // Validate roleId
+  if (!roleId) {
+    throw new ApiError(400, "Role ID is required");
+  }
+
+  // Extract roleDisplayName from the request body
+  const { roleDisplayName } = req.body;
+
+  // Validate roleDisplayName
+  if (!roleDisplayName) {
+    throw new ApiError(400, "Role display name is required");
+  }
+
+  // Find the role by ID
+  const roleData = await UserRole.findById(roleId);
+
+  // Check if the role exists
+  if (!roleData) {
+    throw new ApiError(404, "User role not found");
+  }
+
+  // Update the roleDisplayName
+  roleData.roleDisplayName = roleDisplayName;
+
+  // Save the updated role
+  const updatedData = await roleData.save();
+
+  // Send a success response
+  res.status(200).json({
+    success: true,
+    message: "Role updated successfully",
+    data: roleData,
+  });
+});
+
 const registerUser = asyncHandler(async (req, res, next) => {
   const {
     userName,
@@ -140,10 +178,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 };
 
 const loginUser = asyncHandler(async (req, res) => {
-  console.log("request", req.body);
   const { phoneNo, email, rollNo, password } = req.body;
-
-  console.log(phoneNo, password);
 
   if (!phoneNo && !email && !rollNo && !password) {
     throw new ApiError(400, "USer Details are required");
@@ -171,6 +206,10 @@ const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
+  const roleDetails = await UserRole.findById(loggedInuser?.role).select(
+    "roleDisplayName"
+  );
+
   const options = {
     httpOnly: true,
     secure: true,
@@ -185,6 +224,7 @@ const loginUser = asyncHandler(async (req, res) => {
         200,
         {
           user: loggedInuser,
+          roleDetails,
           refreshToken,
           accessToken,
         },
@@ -219,7 +259,6 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const getUserDetails = asyncHandler(async (req, res) => {
-  console.log("request coming here");
   const userId = req.params.id;
   if (!userId) {
     throw new ApiError(400, "student id is required");
@@ -231,11 +270,20 @@ const getUserDetails = asyncHandler(async (req, res) => {
   if (!userDetails) {
     throw new ApiError(400, "no user found");
   }
-  console.log("userDetails", userDetails);
+
+  const roleDetails = await UserRole.findById(userDetails?.role);
+  const userDetailsWithRole = {
+    ...userDetails,
+    roleDisplayName: roleDetails.roleDisplayName,
+  };
   return res
     .status(200)
     .json(
-      new ApiResponse(200, userDetails, "User Details fetched Successfully")
+      new ApiResponse(
+        200,
+        userDetailsWithRole,
+        "User Details fetched Successfully"
+      )
     );
 });
 
@@ -341,4 +389,5 @@ export {
   logoutUser,
   updateStudentDetails,
   getUserDetails,
+  updateUserRoleById,
 };
