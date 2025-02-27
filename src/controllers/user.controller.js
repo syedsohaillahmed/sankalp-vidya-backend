@@ -158,6 +158,61 @@ const registerUser = asyncHandler(async (req, res, next) => {
     .json(new ApiResponse(201, userResponse, "User Registerd Sucessfuly"));
 });
 
+// const getUsers = asyncHandler(async (req, res) => {
+//   const { role, gender } = req.query;
+//   let filter = {};
+//   if (gender) {
+//     filter.gender = gender;
+//   }
+//   if (role) {
+//     filter.role = role;
+//   }
+
+//   const usersList = await User.find(filter);
+
+//   return res
+//     .status(200)
+//     .json(new ApiResponse(200, usersList, "Users List fetched successfully"));
+// });
+
+const getUsers = asyncHandler(async (req, res) => {
+  const { role, gender, page = 1, limit = 10 } = req.query;
+  let filter = {};
+
+  if (gender) {
+    filter.gender = gender;
+  }
+  if (role) {
+    filter.role = role;
+  }
+
+  const options = {
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+  };
+
+  const excludeFields = {
+    password: 0,
+    refreshToken: 0,
+    watchHistory: 0,
+    rollNo: 0,
+    ratings: 0,
+    lastLogin: 0,
+    logoutTime: 0,
+    registrationDate: 0,
+    createdBy: 0,
+  }; // Add other fields if needed if include:1
+
+  const usersList = await User.aggregatePaginate(
+    User.aggregate([{ $match: filter }, { $project: excludeFields }]),
+    options
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, usersList, "Users List fetched successfully"));
+});
+
 const generateAccessAndRefreshToken = async (userId) => {
   try {
     const userData = await User.findById(userId);
@@ -271,7 +326,6 @@ const getUserDetails = asyncHandler(async (req, res) => {
     throw new ApiError(400, "no user found");
   }
 
-  console.log("userDetails", userDetails)
   const roleDetails = await UserRole.findById(userDetails?.role);
   const userDetailsWithRole = {
     userDetails,
@@ -450,4 +504,5 @@ export {
   getUserDetails,
   updateUserRoleById,
   updateUserDetailsById,
+  getUsers,
 };

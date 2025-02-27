@@ -9,6 +9,7 @@ import {
   getUserDetails,
   updateUserRoleById,
   updateUserDetailsById,
+  getUsers,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -33,9 +34,12 @@ router.route("/userRole/:id").put(updateUserRoleById);
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
 
+//get userslit
+router.route("/").get(verifyJWT, getUsers)
+
 //get data based on userid
 router.route("/:id").get(verifyJWT,getUserDetails);
-router.route("/:id").put(updateUserDetailsById);
+router.route("/:id").put(verifyJWT,updateUserDetailsById);
 
 router.route("/student/:id").patch(updateStudentDetails); // Update student details by ID
 
