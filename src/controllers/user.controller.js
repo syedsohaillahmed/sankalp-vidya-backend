@@ -208,6 +208,18 @@ const getUsers = asyncHandler(async (req, res) => {
     options
   );
 
+  const rolesCache = await UserRole.find().select("_id roleDisplayName").lean();
+  const rolesMap = new Map(
+    rolesCache.map((role) => [role._id.toString(), role.roleDisplayName])
+  );
+
+  usersList.docs = usersList.docs.map((user) => ({
+    ...user,
+    roleDisplayName: rolesMap.get(user.role.toString()) || "Unknown",
+  }));
+
+
+
   return res
     .status(200)
     .json(new ApiResponse(200, usersList, "Users List fetched successfully"));
