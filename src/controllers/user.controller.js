@@ -218,8 +218,6 @@ const getUsers = asyncHandler(async (req, res) => {
     roleDisplayName: rolesMap.get(user.role.toString()) || "Unknown",
   }));
 
-
-
   return res
     .status(200)
     .json(new ApiResponse(200, usersList, "Users List fetched successfully"));
@@ -354,6 +352,7 @@ const getUserDetails = asyncHandler(async (req, res) => {
     );
 });
 
+
 const updateUserDetailsById = asyncHandler(async (req, res) => {
   const { fullName, dateOfBirth, gender, alternatePhoneNo, email } = req.body;
 
@@ -411,6 +410,81 @@ const updateUserDetailsById = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(201, userData, "updated data successfully"));
 });
+
+const getStudentsList = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+
+  const options = {
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+  };
+
+  // Fetch students list with pagination
+  const studentsList = await Student.aggregatePaginate(
+    Student.aggregate([{ $match: {} }]), // Add filters if needed
+    options
+  );
+
+  if (!studentsList.docs.length) {
+    return res.status(200).json({
+      message: "No students found",
+      students: studentsList,
+    });
+  }
+  
+
+  if (studentsList?.docs?.length >0) {
+    // Extract userIds from students list
+    const userIds = studentsList.docs.map((student) => student.userId);
+
+    // Fetch all user data in a single query
+    const users = await User.find({ _id: { $in: userIds } })
+      .select("_id fullName phoneNo email avatar gender phone registrationDate") // Fetch only necessary fields
+      .lean();
+
+    // Create a Map for fast lookup
+    const usersMap = new Map(users.map((user) => [user._id?.toString(), user]));
+
+    // Append user data to each student
+    studentsList.docs = studentsList.docs.map((student) => ({
+      ...student,
+      basicDetails: usersMap.get(student?.userId?.toString()) || null, // Attach user data
+    }));
+
+  }
+
+  return res.status(200).json(new ApiResponse(200, studentsList, "Students List Fetched Successfully"));
+});
+
+// const getStudentsList = asyncHandler(async (req, res) => {
+//   const { page = 1, limit = 10 } = req.query;
+
+//   const options = {
+//     page: parseInt(page, 10),
+//     limit: parseInt(limit, 10),
+//   };
+
+//   const filter = {};
+
+//   const studentList = await Student.aggregatePaginate(Student.aggregate([{ $match: filter }]), options);
+
+//   const userIds = studentList.docs.map((student)=> student.userId)
+
+//   const users = await User.find({_id: {$in: userIds}}).select("fullName registrationDate avatar active phoneNo gender  ").lean()
+//   // console.log(userIds)
+
+//   const usermap = new Map(users.map((user)=> [user._id.toString(), user]))
+
+//   studentList.docs = await studentList.docs.map((student)=>{
+//     return {
+//       ...student,
+//       user: usermap.get(student.userId.toString()  || null)
+//     }
+//   })
+//   return res.status(200).json({
+//     studentList
+//   })
+// });
 
 const updateStudentDetails = asyncHandler(async (req, res, next) => {
   const studentId = req.params.id;
@@ -517,4 +591,5 @@ export {
   updateUserRoleById,
   updateUserDetailsById,
   getUsers,
+  getStudentsList
 };

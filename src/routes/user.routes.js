@@ -10,6 +10,7 @@ import {
   updateUserRoleById,
   updateUserDetailsById,
   getUsers,
+  getStudentsList,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -35,12 +36,12 @@ router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
 
 //get userslit
-router.route("/").get(verifyJWT, getUsers)
+router.route("/userList").get(verifyJWT, getUsers)
 
 //get data based on userid
-router.route("/:id").get(verifyJWT,getUserDetails);
-router.route("/:id").put(verifyJWT,updateUserDetailsById);
-
+router.route("/user/:id").get(verifyJWT,getUserDetails);
+router.route("/user/:id").put(verifyJWT,updateUserDetailsById);
+router.route("/student").get(verifyJWT, getStudentsList)
 router.route("/student/:id").patch(updateStudentDetails); // Update student details by ID
 
 export default router;
