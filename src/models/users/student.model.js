@@ -80,7 +80,6 @@ const studentsSchema = new Schema(
       // required: true,
       unique: true,
       sparse: true,
-
     },
     panImage: {
       type: String, // URL or file path for the Aadhar image
@@ -94,18 +93,23 @@ const studentsSchema = new Schema(
       // required: true,
     },
     classGrade: {
-      type: mongoose.Types.ObjectId,
-      ref: "Class",
+      id: {
+        type: mongoose.Types.ObjectId,
+        ref: "Class",
+      },
+      displayName: {
+        type: String,
+      },
     },
-    academicYear:{
+    academicYear: {
       type: mongoose.Types.ObjectId,
-      ref:"AcademicYear"
+      ref: "AcademicYear",
     },
     subjectsEnrolled: [
       {
         subjectId: {
           type: mongoose.Types.ObjectId,
-          ref: "Subject", 
+          ref: "Subject",
         },
         name: {
           type: String,
@@ -122,7 +126,6 @@ const studentsSchema = new Schema(
       // required: true,
       unique: true,
       sparse: true,
-
     },
     active: {
       type: Boolean,

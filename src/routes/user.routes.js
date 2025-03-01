@@ -11,6 +11,7 @@ import {
   updateUserDetailsById,
   getUsers,
   getStudentsList,
+  registerStudents,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -42,6 +43,12 @@ router.route("/userList").get(verifyJWT, getUsers)
 router.route("/user/:id").get(verifyJWT,getUserDetails);
 router.route("/user/:id").put(verifyJWT,updateUserDetailsById);
 router.route("/student").get(verifyJWT, getStudentsList)
+router.route("/student").post( upload.fields([
+  {
+    name: "avatar",
+    maxCount: 1,
+  },
+]), registerStudents)
 router.route("/student/:id").patch(updateStudentDetails); // Update student details by ID
 
 export default router;

@@ -8,6 +8,7 @@ import { Student } from "../models/users/student.model.js";
 import { Employee } from "../models/users/employee.model.js";
 import internal from "stream";
 import { Teacher } from "../models/users/Teacher.model.js";
+import mongoose from "mongoose";
 
 const createUserRoles = asyncHandler(async (req, res, next) => {
   const { roleName, roleId, active } = req.body;
@@ -89,12 +90,22 @@ const registerUser = asyncHandler(async (req, res, next) => {
     gender,
   } = req.body;
 
-  if (!phoneNo || !fullName || !roleId || !dateOfBirth || !userPassword) {
+  if (!phoneNo || !fullName || !gender || !dateOfBirth || !userPassword) {
     throw new ApiError(
       400,
       "Bad Request: phoneNo, fullName, role, date of birth, and password are required"
     );
   }
+
+  if (!roleId) {
+    throw new ApiError(400, "Bad Request: roleID is Required ");
+  }
+  const roleData = await UserRole.findById(roleId);
+
+  if (!roleData) {
+    throw new ApiError(500, "Something Went Wrong while fetching role details");
+  }
+
   const queryConditions = [];
   if (phoneNo) queryConditions.push({ phoneNo });
   if (userName) queryConditions.push({ userName });
@@ -118,8 +129,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
   ) {
     avatarLocalPath = req?.files?.avatar[0]?.path;
   }
-
-  const roleData = await UserRole.findById(roleId);
 
   uploadedAvatar = await uploadOnCloudinary(avatarLocalPath);
 
@@ -158,22 +167,137 @@ const registerUser = asyncHandler(async (req, res, next) => {
     .json(new ApiResponse(201, userResponse, "User Registerd Sucessfuly"));
 });
 
-// const getUsers = asyncHandler(async (req, res) => {
-//   const { role, gender } = req.query;
-//   let filter = {};
-//   if (gender) {
-//     filter.gender = gender;
-//   }
-//   if (role) {
-//     filter.role = role;
-//   }
+const registerStudents = asyncHandler(async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction(); // ✅ Start transaction
 
-//   const usersList = await User.find(filter);
+  try {
+    const {
+      userName,
+      fullName,
+      dateOfBirth,
+      userPassword,
+      phoneNo,
+      alternatePhoneNo,
+      email,
+      rollNo,
+      roleId,
+      gender,
+      academicYear,
+      studentId,
+    } = req.body;
+    // ✅ Validation
+    if (!roleId) {
+      throw new ApiError(400, "Bad Request: roleID is Required ");
+    }
+    if (
+      !phoneNo ||
+      !fullName ||
+      !roleId ||
+      !dateOfBirth ||
+      !studentId ||
+      !userPassword ||
+      !gender ||
+      !academicYear
+    ) {
+      throw new ApiError(400, "Bad Request: Required fields are missing");
+    }
 
-//   return res
-//     .status(200)
-//     .json(new ApiResponse(200, usersList, "Users List fetched successfully"));
-// });
+    // ✅ Fetch role details
+    const roleData = await UserRole.findById(roleId).session(session);
+    if (!roleData) {
+      throw new ApiError(
+        500,
+        "Something Went Wrong while fetching role details"
+      );
+    }
+
+    // ✅ Check if user already exists
+    const queryConditions = [];
+    if (phoneNo) queryConditions.push({ phoneNo });
+    if (userName) queryConditions.push({ userName });
+    if (email) queryConditions.push({ email });
+
+    const existedUser = await User.findOne({ $or: queryConditions }).session(
+      session
+    );
+    if (existedUser) {
+      throw new ApiError(409, "User Already Exists");
+    }
+
+    // ✅ Upload Avatar if exists
+    let uploadedAvatar = null;
+    if (
+      req.files &&
+      Array.isArray(req?.files?.avatar) &&
+      req?.files?.avatar?.length > 0
+    ) {
+      uploadedAvatar = await uploadOnCloudinary(req?.files?.avatar[0]?.path);
+    }
+
+    // ✅ Create User inside transaction
+    const createdUser = await User.create(
+      [
+        {
+          userName,
+          fullName,
+          avatar: uploadedAvatar?.url || "",
+          dateOfBirth,
+          phoneNo,
+          password: userPassword,
+          alternatePhoneNo,
+          email,
+          rollNo,
+          gender,
+          role: roleId,
+        },
+      ],
+      { session }
+    );
+
+    if (!createdUser) {
+      throw new ApiError(500, "Something Went Wrong while registering user");
+    }
+
+    // ✅ Create Student inside transaction
+    const createdStudent = await Student.create(
+      [
+        {
+          userId: createdUser[0]._id, // Access first element since create() returns an array
+          classGrade: {
+            id: roleData._id,
+            displayName: roleData.name,
+          },
+          academicYear: academicYear,
+          studentId: studentId,
+        },
+      ],
+      { session }
+    );
+
+    if (!createdStudent) {
+      throw new ApiError(500, "Internal server error while creating student");
+    }
+
+    // ✅ Commit transaction if everything is successful
+    await session.commitTransaction();
+    session.endSession();
+
+    // ✅ Send response
+    const { password, refreshToken, ...userResponse } =
+      createdUser[0].toObject();
+    res
+      .status(201)
+      .json(
+        new ApiResponse(201, userResponse, "Student Registered Successfully")
+      );
+  } catch (error) {
+    // ❌ Rollback the transaction on failure
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+});
 
 const getUsers = asyncHandler(async (req, res) => {
   const { role, gender, page = 1, limit = 10 } = req.query;
@@ -352,7 +476,6 @@ const getUserDetails = asyncHandler(async (req, res) => {
     );
 });
 
-
 const updateUserDetailsById = asyncHandler(async (req, res) => {
   const { fullName, dateOfBirth, gender, alternatePhoneNo, email } = req.body;
 
@@ -419,9 +542,11 @@ const getStudentsList = asyncHandler(async (req, res) => {
     limit: parseInt(limit, 10),
   };
 
+  const filter = {};
+
   // Fetch students list with pagination
   const studentsList = await Student.aggregatePaginate(
-    Student.aggregate([{ $match: {} }]), // Add filters if needed
+    Student.aggregate([{ $match: filter }]), // Add filters if needed
     options
   );
 
@@ -431,9 +556,8 @@ const getStudentsList = asyncHandler(async (req, res) => {
       students: studentsList,
     });
   }
-  
 
-  if (studentsList?.docs?.length >0) {
+  if (studentsList?.docs?.length > 0) {
     // Extract userIds from students list
     const userIds = studentsList.docs.map((student) => student.userId);
 
@@ -450,41 +574,14 @@ const getStudentsList = asyncHandler(async (req, res) => {
       ...student,
       basicDetails: usersMap.get(student?.userId?.toString()) || null, // Attach user data
     }));
-
   }
 
-  return res.status(200).json(new ApiResponse(200, studentsList, "Students List Fetched Successfully"));
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, studentsList, "Students List Fetched Successfully")
+    );
 });
-
-// const getStudentsList = asyncHandler(async (req, res) => {
-//   const { page = 1, limit = 10 } = req.query;
-
-//   const options = {
-//     page: parseInt(page, 10),
-//     limit: parseInt(limit, 10),
-//   };
-
-//   const filter = {};
-
-//   const studentList = await Student.aggregatePaginate(Student.aggregate([{ $match: filter }]), options);
-
-//   const userIds = studentList.docs.map((student)=> student.userId)
-
-//   const users = await User.find({_id: {$in: userIds}}).select("fullName registrationDate avatar active phoneNo gender  ").lean()
-//   // console.log(userIds)
-
-//   const usermap = new Map(users.map((user)=> [user._id.toString(), user]))
-
-//   studentList.docs = await studentList.docs.map((student)=>{
-//     return {
-//       ...student,
-//       user: usermap.get(student.userId.toString()  || null)
-//     }
-//   })
-//   return res.status(200).json({
-//     studentList
-//   })
-// });
 
 const updateStudentDetails = asyncHandler(async (req, res, next) => {
   const studentId = req.params.id;
@@ -591,5 +688,6 @@ export {
   updateUserRoleById,
   updateUserDetailsById,
   getUsers,
-  getStudentsList
+  getStudentsList,
+  registerStudents,
 };
