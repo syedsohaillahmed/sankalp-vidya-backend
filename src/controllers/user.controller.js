@@ -574,7 +574,7 @@ const getStudentsList = asyncHandler(async (req, res) => {
 
     // Fetch all user data in a single query
     const users = await User.find({ _id: { $in: userIds } })
-      .select("_id fullName phoneNo email avatar gender phone registrationDate") // Fetch only necessary fields
+      .select("_id fullName dateOfBirth phoneNo email avatar gender phone registrationDate") // Fetch only necessary fields
       .lean();
 
     // Create a Map for fast lookup
@@ -609,10 +609,17 @@ const getStudentDetails = asyncHandler(async (req, res, next) => {
     return res.status(404).json({ message: "Student not found" });
   }
 
+ const userDetail = await User.findById(studentDetails.userId)
+
+ const data = {
+  studentDetails,
+  userDetail
+ }
+
   // Return the updated student details
   return res
     .status(200)
-    .json(new ApiResponse(201, studentDetails, "Updated Student Details"));
+    .json(new ApiResponse(201, data, "Successfully fetched Student Details"));
 });
 
 const updateStudentDetails = asyncHandler(async (req, res, next) => {
