@@ -102,8 +102,16 @@ const studentsSchema = new Schema(
       },
     },
     academicYear: {
-      type: mongoose.Types.ObjectId,
-      ref: "AcademicYear",
+      id: {
+        type: mongoose.Types.ObjectId,
+        ref: "AcademicYear",
+      },
+      displayName: {
+        type: String,
+      },
+      batchName:{
+        type: String,
+      }
     },
     subjectsEnrolled: [
       {

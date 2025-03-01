@@ -9,6 +9,7 @@ import { Employee } from "../models/users/employee.model.js";
 import internal from "stream";
 import { Teacher } from "../models/users/Teacher.model.js";
 import mongoose from "mongoose";
+import { AcademicYear } from "../models/academic/academicYear/academicYear.model.js";
 
 const createUserRoles = asyncHandler(async (req, res, next) => {
   const { roleName, roleId, active } = req.body;
@@ -212,6 +213,12 @@ const registerStudents = asyncHandler(async (req, res) => {
       );
     }
 
+    const academicYearData = await AcademicYear.findById(academicYear);
+    if (!academicYearData) {
+      throw new ApiError(500, "Not a Valid Academic Year");
+    }
+
+
     // ✅ Check if user already exists
     const queryConditions = [];
     if (phoneNo) queryConditions.push({ phoneNo });
@@ -266,9 +273,13 @@ const registerStudents = asyncHandler(async (req, res) => {
           userId: createdUser[0]._id, // Access first element since create() returns an array
           classGrade: {
             id: roleData._id,
-            displayName: roleData.name,
+            displayName: roleData.roleDisplayName,
           },
-          academicYear: academicYear,
+          academicYear: {
+            id: academicYearData._id,
+            displayName: academicYearData.academicYear,
+            batchName: academicYearData.batchName,
+          },
           studentId: studentId,
         },
       ],
@@ -590,7 +601,6 @@ const getStudentDetails = asyncHandler(async (req, res, next) => {
     throw new ApiError(400, "student id is required");
   }
 
- 
   // Perform the update operation
   const studentDetails = await Student.findById(studentId);
 
@@ -673,9 +683,6 @@ const updateStudentDetails = asyncHandler(async (req, res, next) => {
     mappedData.fathersOccupation = updateData.fathersOccupation;
   if (updateData.mothersOccupation)
     mappedData.mothersOccupation = updateData.mothersOccupation;
-  if (updateData.classGrade) mappedData.classGrade = updateData.classGrade;
-  if (updateData.academicYear)
-    mappedData.academicYear = updateData.academicYear;
   if (updateData.subjectsEnrolled)
     mappedData.subjectsEnrolled = updateData.subjectsEnrolled;
   if (updateData.studentId) mappedData.studentId = updateData.studentId;
@@ -712,5 +719,5 @@ export {
   getUsers,
   getStudentsList,
   registerStudents,
-  getStudentDetails
+  getStudentDetails,
 };

@@ -58,6 +58,24 @@ const getAllAcademicYear = asyncHandler(async (req, res, next) => {
     );
 });
 
+const getAcademicYearDetails = asyncHandler( async (req, res)=>{
+  const academicId = req.params.id
+  if(!academicId){
+    throw(new ApiError(400, "Academic id is required"))
+  }
+
+  const academicDetails = await AcademicYear.findById(academicId)
+  if(!academicDetails){
+    throw(new ApiError(404, "Academic Detail not found"))
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, academicDetails, "academic details fetched successfully")
+  )
+
+
+} )
+
 const createSubjects = asyncHandler(async (req, res, next) => {
   const {
     name,
@@ -215,4 +233,5 @@ export {
   getAllAcademicYear,
   createChapter,
   addNotesTochapter,
+  getAcademicYearDetails
 };
