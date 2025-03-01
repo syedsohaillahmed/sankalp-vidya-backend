@@ -583,6 +583,28 @@ const getStudentsList = asyncHandler(async (req, res) => {
     );
 });
 
+const getStudentDetails = asyncHandler(async (req, res, next) => {
+  const studentId = req.params.id;
+
+  if (!studentId) {
+    throw new ApiError(400, "student id is required");
+  }
+
+ 
+  // Perform the update operation
+  const studentDetails = await Student.findById(studentId);
+
+  // Check if the student was found and updated
+  if (!studentDetails) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+
+  // Return the updated student details
+  return res
+    .status(200)
+    .json(new ApiResponse(201, studentDetails, "Updated Student Details"));
+});
+
 const updateStudentDetails = asyncHandler(async (req, res, next) => {
   const studentId = req.params.id;
   const updateData = req.body;
@@ -690,4 +712,5 @@ export {
   getUsers,
   getStudentsList,
   registerStudents,
+  getStudentDetails
 };
