@@ -33,7 +33,6 @@ const createAcademicYear = asyncHandler(async (req, res, next) => {
   if (!createdAcademicyear) {
     throw new ApiError(400, "failed to create Academic year", {});
   }
-  console.log(createdAcademicyear);
 
   return res
     .status(201)
@@ -58,23 +57,27 @@ const getAllAcademicYear = asyncHandler(async (req, res, next) => {
     );
 });
 
-const getAcademicYearDetails = asyncHandler( async (req, res)=>{
-  const academicId = req.params.id
-  if(!academicId){
-    throw(new ApiError(400, "Academic id is required"))
+const getAcademicYearDetails = asyncHandler(async (req, res) => {
+  const academicId = req.params.id;
+  if (!academicId) {
+    throw new ApiError(400, "Academic id is required");
   }
 
-  const academicDetails = await AcademicYear.findById(academicId)
-  if(!academicDetails){
-    throw(new ApiError(404, "Academic Detail not found"))
+  const academicDetails = await AcademicYear.findById(academicId);
+  if (!academicDetails) {
+    throw new ApiError(404, "Academic Detail not found");
   }
 
-  return res.status(200).json(
-    new ApiResponse(200, academicDetails, "academic details fetched successfully")
-  )
-
-
-} )
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        academicDetails,
+        "academic details fetched successfully"
+      )
+    );
+});
 
 const createSubjects = asyncHandler(async (req, res, next) => {
   const {
@@ -86,7 +89,6 @@ const createSubjects = asyncHandler(async (req, res, next) => {
     category,
     active,
   } = req.body;
-  console.log("name", name);
 
   if (!name) {
     throw new ApiError(401, "subject name is required", {});
@@ -131,7 +133,6 @@ const createClass = asyncHandler(async (req, res, next) => {
     active,
     classGrade,
   });
-  console.log("alternateName", createdClass);
 
   const classData = await Class.findById(createdClass._id);
   if (!classData) {
@@ -163,21 +164,45 @@ const createChapter = asyncHandler(async (req, res) => {
     academicYearId,
     publishedDate,
   } = req.body;
-  console.log(
-    "data, ",
-    name,
-    description,
-    subjectId,
-    classId,
-    academicYearId,
-    publishedDate
-  );
+
+  if (!subjectId || !name || !subjectId || !classId || !academicYearId) {
+    throw new ApiError(
+      401,
+      "subjectId || name || subjectId || classId || academicYearId are required"
+    );
+  }
+
+  const subjectData = await Subject.findById(subjectId);
+  if (!subjectData) {
+    throw new ApiError(401, "Not a valid Subject");
+  }
+  const classData = await Class.findById(classId);
+  if (!classData) {
+    throw new ApiError(401, "Not a valid Class");
+  }
+
+  const academicYearData = await AcademicYear.findById(academicYearId);
+  if (!academicYearData) {
+    throw new ApiError(401, "Not a valid Academic year");
+  }
   const createdChapter = await Chapter.create({
     name,
     description,
-    subject: subjectId,
-    class: classId,
-    academicYear: academicYearId,
+    subject: {
+      id: subjectData?._id,
+      displayName: subjectData?.name,
+      board: subjectData?.board,
+    },
+    class: {
+      id: classData?._id,
+      name: classData?.name,
+      classGrade: classData?.classGrade,
+    },
+    academicYear: {
+      id: academicYearData?._id,
+      displayName: academicYearData?.academicYear,
+      batchName: academicYearData?.batchName,
+    },
     publishedDate,
   });
 
@@ -199,8 +224,6 @@ const addNotesTochapter = asyncHandler(async (req, res) => {
   if (!id) {
     throw new ApiError(404, "chapter id is required");
   }
-
-  
 
   const notesData = {
     file,
@@ -233,5 +256,5 @@ export {
   getAllAcademicYear,
   createChapter,
   addNotesTochapter,
-  getAcademicYearDetails
+  getAcademicYearDetails,
 };

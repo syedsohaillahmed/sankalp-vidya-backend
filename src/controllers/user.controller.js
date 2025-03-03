@@ -10,6 +10,7 @@ import internal from "stream";
 import { Teacher } from "../models/users/Teacher.model.js";
 import mongoose from "mongoose";
 import { AcademicYear } from "../models/academic/academicYear/academicYear.model.js";
+import { Class } from "../models/academic/class/class.model.js";
 
 const createUserRoles = asyncHandler(async (req, res, next) => {
   const { roleName, roleId, active } = req.body;
@@ -186,6 +187,7 @@ const registerStudents = asyncHandler(async (req, res) => {
       gender,
       academicYear,
       studentId,
+      classId,
     } = req.body;
     // ✅ Validation
     if (!roleId) {
@@ -199,25 +201,27 @@ const registerStudents = asyncHandler(async (req, res) => {
       !studentId ||
       !userPassword ||
       !gender ||
-      !academicYear
+      !academicYear ||
+      !classId
     ) {
       throw new ApiError(400, "Bad Request: Required fields are missing");
+    }
+
+    const classData = await Class.findById(classId).session(session);
+    if (!classData) {
+      throw new ApiError(500, "Not a Valid Class Id");
     }
 
     // ✅ Fetch role details
     const roleData = await UserRole.findById(roleId).session(session);
     if (!roleData) {
-      throw new ApiError(
-        500,
-        "Something Went Wrong while fetching role details"
-      );
+      throw new ApiError(500, "Not a valid role");
     }
 
     const academicYearData = await AcademicYear.findById(academicYear);
     if (!academicYearData) {
       throw new ApiError(500, "Not a Valid Academic Year");
     }
-
 
     // ✅ Check if user already exists
     const queryConditions = [];
@@ -271,9 +275,14 @@ const registerStudents = asyncHandler(async (req, res) => {
       [
         {
           userId: createdUser[0]._id, // Access first element since create() returns an array
-          classGrade: {
+          role: {
             id: roleData._id,
             displayName: roleData.roleDisplayName,
+          },
+          class: {
+            id: classData._id,
+            classGrade: classData.classGrade,
+            displayName: classData.name,
           },
           academicYear: {
             id: academicYearData._id,
@@ -546,7 +555,7 @@ const updateUserDetailsById = asyncHandler(async (req, res) => {
 });
 
 const getStudentsList = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 100 } = req.query;
 
   const options = {
     page: parseInt(page, 10),
@@ -574,7 +583,9 @@ const getStudentsList = asyncHandler(async (req, res) => {
 
     // Fetch all user data in a single query
     const users = await User.find({ _id: { $in: userIds } })
-      .select("_id fullName dateOfBirth phoneNo email avatar gender phone registrationDate") // Fetch only necessary fields
+      .select(
+        "_id fullName dateOfBirth phoneNo email avatar gender phone registrationDate"
+      ) // Fetch only necessary fields
       .lean();
 
     // Create a Map for fast lookup
@@ -609,17 +620,17 @@ const getStudentDetails = asyncHandler(async (req, res, next) => {
     return res.status(404).json({ message: "Student not found" });
   }
 
- const userDetail = await User.findById(studentDetails.userId)
+  const userDetail = await User.findById(studentDetails.userId);
 
- const data = {
-  studentDetails,
-  userDetail
- }
+  const data = {
+    studentDetails,
+    userDetail,
+  };
 
   // Return the updated student details
   return res
     .status(200)
-    .json(new ApiResponse(201, data, "Successfully fetched Student Details"));
+    .json(new ApiResponse(200, data, "Successfully fetched Student Details"));
 });
 
 const updateStudentDetails = asyncHandler(async (req, res, next) => {

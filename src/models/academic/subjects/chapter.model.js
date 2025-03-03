@@ -1,6 +1,5 @@
 import { model, Schema } from "mongoose";
 
-
 const chapterSchema = new Schema(
   {
     name: {
@@ -11,16 +10,40 @@ const chapterSchema = new Schema(
       type: String,
     },
     subject: {
-      type: Schema.Types.ObjectId,
-      ref: "Subject",
+      id: {
+        type: Schema.Types.ObjectId,
+        ref: "Subject",
+      },
+      displayName: {
+        type: String,
+      },
+      board: {
+        type: String,
+      },
     },
     class: {
-      type: Schema.Types.ObjectId,
-      ref: "Class",
+      id: {
+        type: Schema.Types.ObjectId,
+        ref: "Class",
+      },
+      name: {
+        type: String,
+      },
+      classGrade: {
+        type: String,
+      },
     },
     academicYear: {
-      type: Schema.Types.ObjectId,
-      ref: "AcademicYear",
+      id: {
+        type: Schema.Types.ObjectId,
+        ref: "AcademicYear",
+      },
+      displayName: {
+        type: String,
+      },
+      batchName: {
+        type: String,
+      },
     },
     notes: [
       {
@@ -50,6 +73,26 @@ const chapterSchema = new Schema(
         },
       },
     ],
+    videos: {
+      videoEmbededLink: {
+        type: String,
+      },
+      videoUrl: {
+        type: String,
+      },
+      videoSource: {
+        type: String,
+      },
+      author: {
+        type: String,
+      },
+      uploadDate: {
+        type: Date,
+      },
+      videoUploadedToSourceDate: {
+        type: Date,
+      },
+    },
     publishedDate: {
       type: Date,
       default: Date.now,

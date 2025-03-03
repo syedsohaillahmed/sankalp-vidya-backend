@@ -1,5 +1,6 @@
 import mongoose, { Schema, model } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import { type } from "os";
 
 // Define the Students schema
 const studentsSchema = new Schema(
@@ -92,10 +93,22 @@ const studentsSchema = new Schema(
       type: String,
       // required: true,
     },
-    classGrade: {
+    role: {
+      id: {
+        type: mongoose.Types.ObjectId,
+        ref: "Role",
+      },
+      displayName: {
+        type: String,
+      },
+    },
+    class: {
       id: {
         type: mongoose.Types.ObjectId,
         ref: "Class",
+      },
+      classGrade: {
+        type: String,
       },
       displayName: {
         type: String,
@@ -109,9 +122,9 @@ const studentsSchema = new Schema(
       displayName: {
         type: String,
       },
-      batchName:{
+      batchName: {
         type: String,
-      }
+      },
     },
     subjectsEnrolled: [
       {
