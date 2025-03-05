@@ -208,9 +208,9 @@ const createChapter = asyncHandler(async (req, res) => {
 
   const chapter = await Chapter.findById(createdChapter._id);
 
-  return res.status(200).json({
-    message: chapter,
-  });
+  return res
+    .status(201)
+    .json(new ApiResponse(201, chapter, "Successfully created chapter"));
 });
 
 const getAllChapter = asyncHandler(async (req, res) => {
@@ -301,18 +301,18 @@ const addVideoUrlToChapter = asyncHandler(async (req, res) => {
     );
 });
 
-const getChapterById = asyncHandler( async(req, res)=>{
-  const {id} = req.params
+const getChapterById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
   if (!id) {
     throw new ApiError(400, "Chapter ID is required");
   }
   const chapterDetails = await Chapter.findById(id);
   res
-  .status(200)
-  .json(
-    new ApiResponse(200, chapterDetails, "Successfully Fetched Chapter data")
-  );
-} )
+    .status(200)
+    .json(
+      new ApiResponse(200, chapterDetails, "Successfully Fetched Chapter data")
+    );
+});
 
 export {
   createAcademicYear,
@@ -326,5 +326,5 @@ export {
   getAllChapter,
   getAcademicYearDetails,
   addVideoUrlToChapter,
-  getChapterById
+  getChapterById,
 };
