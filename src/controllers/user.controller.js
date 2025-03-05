@@ -319,6 +319,40 @@ const registerStudents = asyncHandler(async (req, res) => {
   }
 });
 
+const deleteStudent = asyncHandler(async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction(); // ✅ Start transaction
+
+  try {
+    const { id } = req.params;
+
+    // ✅ Check if student exists
+    const student = await Student.findById(id).session(session);
+    if (!student) {
+      throw new ApiError(404, "Student not found");
+    }
+
+    // ✅ Delete the student record
+    await Student.deleteOne({ _id: id }).session(session);
+
+    // ✅ Delete the associated user record
+    await User.deleteOne({ _id: student.userId }).session(session);
+
+    // ✅ Commit transaction if everything is successful
+    await session.commitTransaction();
+    session.endSession();
+
+    // ✅ Send response
+    res.status(200).json(new ApiResponse(200, null, "Student deleted successfully"));
+  } catch (error) {
+    // ❌ Rollback the transaction on failure
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+});
+
+
 const getUsers = asyncHandler(async (req, res) => {
   const { role, gender, page = 1, limit = 10 } = req.query;
   let filter = {};
@@ -738,4 +772,5 @@ export {
   getStudentsList,
   registerStudents,
   getStudentDetails,
+  deleteStudent
 };

@@ -13,6 +13,7 @@ import {
   getStudentsList,
   registerStudents,
   getStudentDetails,
+  deleteStudent,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -52,5 +53,5 @@ router.route("/student").post( upload.fields([
 ]), registerStudents)
 router.route("/student/:id").patch(updateStudentDetails); // Update student details by ID
 router.route("/student/:id").get(getStudentDetails); // Update student details by ID
-
+router.route("/student/:id").delete(deleteStudent);
 export default router;

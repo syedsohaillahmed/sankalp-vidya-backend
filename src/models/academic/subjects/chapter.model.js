@@ -77,8 +77,14 @@ const chapterSchema = new Schema(
       videoEmbededLink: {
         type: String,
       },
+      title:{
+        type:String
+      },
       videoUrl: {
         type: String,
+      },
+      description:{
+        type:String
       },
       videoSource: {
         type: String,

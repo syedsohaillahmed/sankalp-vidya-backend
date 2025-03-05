@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllAcademicYear, createSubjects, createAcademicYear, createClass, getAllClass, getAllSubjects, createChapter, addNotesTochapter, getAcademicYearDetails } from "../controllers/academic.controller.js";
+import { getAllAcademicYear, createSubjects, createAcademicYear, createClass, getAllClass, getAllSubjects, createChapter, addNotesTochapter, getAcademicYearDetails, addVideoUrlToChapter, getAllChapter, getChapterById } from "../controllers/academic.controller.js";
 
 
 const router = Router()
@@ -15,7 +15,10 @@ router.route("/subject").get(getAllSubjects)
 router.route("/class").post(createClass)
 router.route("/class").get(getAllClass)
 router.route("/chapter").post(createChapter)
+router.route("/chapter").get(getAllChapter)
+router.route("/chapter/:id").get(getChapterById)
 router.route("/chapter/:id/notes").put(addNotesTochapter)
+router.route("/chapter/:id/videoUrl").put(addVideoUrlToChapter)
 
 
 

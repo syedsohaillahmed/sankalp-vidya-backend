@@ -213,6 +213,15 @@ const createChapter = asyncHandler(async (req, res) => {
   });
 });
 
+const getAllChapter = asyncHandler(async (req, res) => {
+  const chapterData = await Chapter.find();
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, chapterData, "chapter details fetched successfully")
+    );
+});
+
 const addNotesTochapter = asyncHandler(async (req, res) => {
   const id = req.params.id;
   const { file, fileName, author, uploadedBy } = req.body;
@@ -247,6 +256,64 @@ const addNotesTochapter = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, updatedChapter, "Successfully added notes"));
 });
 
+const addVideoUrlToChapter = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    videoEmbededLink,
+    title,
+    description,
+    videoUrl,
+    videoSource,
+    author,
+  } = req.body;
+  console.log("req.body", title, videoUrl);
+  if (!id) {
+    throw new ApiError(400, "Chapter ID is required");
+  }
+
+  if (!videoUrl || !title) {
+    throw new ApiError(400, "Video URL and Title are required");
+  }
+
+  const chapter = await Chapter.findById(id);
+  if (!chapter) {
+    throw new ApiError(404, "Chapter not found");
+  }
+
+  chapter.videos = {
+    videoEmbededLink: videoEmbededLink || chapter.videos?.videoEmbededLink,
+    title: title || chapter.videos?.title,
+    description: description || chapter.videos?.description,
+    videoUrl: videoUrl || chapter.videos?.videoUrl,
+    videoSource: videoSource || chapter.videos?.videoSource,
+    author: author || chapter.videos?.author,
+    uploadDate: new Date(), // Set the current date as the upload date
+    videoUploadedToSourceDate:
+      chapter.videos?.videoUploadedToSourceDate || new Date(),
+  };
+
+  const chapterData = await chapter.save();
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, chapterData, "Successfully updloaded video data")
+    );
+});
+
+const getChapterById = asyncHandler( async(req, res)=>{
+  const {id} = req.params
+  if (!id) {
+    throw new ApiError(400, "Chapter ID is required");
+  }
+  const chapterDetails = await Chapter.findById(id);
+  res
+  .status(200)
+  .json(
+    new ApiResponse(200, chapterDetails, "Successfully Fetched Chapter data")
+  );
+} )
+
 export {
   createAcademicYear,
   createSubjects,
@@ -256,5 +323,8 @@ export {
   getAllAcademicYear,
   createChapter,
   addNotesTochapter,
+  getAllChapter,
   getAcademicYearDetails,
+  addVideoUrlToChapter,
+  getChapterById
 };
