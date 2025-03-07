@@ -266,7 +266,6 @@ const addVideoUrlToChapter = asyncHandler(async (req, res) => {
     videoSource,
     author,
   } = req.body;
-  console.log("req.body", title, videoUrl);
   if (!id) {
     throw new ApiError(400, "Chapter ID is required");
   }
@@ -314,6 +313,47 @@ const getChapterById = asyncHandler(async (req, res) => {
     );
 });
 
+const updateChapterById = asyncHandler(async (req, res) => {
+  const { name, description, active } = req.body;
+  if (!name || name.trim() === "" || name === null || name === undefined) {
+    throw (400, new ApiError(400, null, "chapter name is required"));
+  }
+  const { id } = req.params;
+  if (!id) {
+    throw (400, new ApiError(400, null, "Chapter id is required"));
+  }
+  const chapterData = await Chapter.findById(id);
+  if (!chapterData) {
+    throw (400, new ApiError(400, null, "Not a valid chapter"));
+  }
+
+  (chapterData.name = name || chapterData.name),
+    (chapterData.description = description || chapterData.description);
+  chapterData.active = active || chapterData.active;
+
+  const updatedData = await chapterData.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedData, "data updated successfully"));
+});
+
+const deleteChapterbyId = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    throw (400, new ApiError(400, null, "Chapter id is required"));
+  }
+
+  const deletChapter = await Chapter.deleteOne({_id:id})
+  if (!deletChapter) {
+    throw (400, new ApiError(404, null, "Not a valid ID"));
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, deletChapter, "Successfully deleted chapter"));
+});
+
 export {
   createAcademicYear,
   createSubjects,
@@ -327,4 +367,6 @@ export {
   getAcademicYearDetails,
   addVideoUrlToChapter,
   getChapterById,
+  updateChapterById,
+  deleteChapterbyId
 };
