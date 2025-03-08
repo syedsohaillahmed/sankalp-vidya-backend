@@ -343,7 +343,9 @@ const deleteStudent = asyncHandler(async (req, res) => {
     session.endSession();
 
     // ✅ Send response
-    res.status(200).json(new ApiResponse(200, null, "Student deleted successfully"));
+    res
+      .status(200)
+      .json(new ApiResponse(200, null, "Student deleted successfully"));
   } catch (error) {
     // ❌ Rollback the transaction on failure
     await session.abortTransaction();
@@ -351,7 +353,6 @@ const deleteStudent = asyncHandler(async (req, res) => {
     throw error;
   }
 });
-
 
 const getUsers = asyncHandler(async (req, res) => {
   const { role, gender, page = 1, limit = 10 } = req.query;
@@ -589,18 +590,66 @@ const updateUserDetailsById = asyncHandler(async (req, res) => {
 });
 
 const getStudentsList = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 100 } = req.query;
+  const { page = 1, limit = 100, gender, classId, studentId, fullName, active } = req.query;
 
   const options = {
     page: parseInt(page, 10),
     limit: parseInt(limit, 10),
   };
 
-  const filter = {};
+  // Build the match query dynamically
+  const matchQuery = {};
+  if (classId) matchQuery["class.id"] = new mongoose.Types.ObjectId(classId);
+  if (studentId) matchQuery["studentId"] = studentId;
+  if (active !== undefined) matchQuery["active"] = active === "true"; // Convert string to boolean
 
-  // Fetch students list with pagination
+  const userMatchQuery = {};
+  if (gender) userMatchQuery["userDetails.gender"] = gender;
+  if (fullName) userMatchQuery["userDetails.fullName"] = { $regex: fullName, $options: "i" }; // Case-insensitive search
+
+  // Aggregation pipeline
+  const aggregationPipeline = [
+    {
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userDetails",
+      },
+    },
+    { $unwind: "$userDetails" }, // Flatten the userDetails array
+    {
+      $match: {
+        ...matchQuery,     // Filters on Student collection
+        ...userMatchQuery, // Filters on User collection
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        userId: 1,
+        role: 1,
+        class: 1,
+        academicYear: 1,
+        studentId: 1,
+        active: 1,
+        subjectsEnrolled: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        "basicDetails._id": "$userDetails._id",
+        "basicDetails.fullName": "$userDetails.fullName",
+        "basicDetails.avatar": "$userDetails.avatar",
+        "basicDetails.dateOfBirth": "$userDetails.dateOfBirth",
+        "basicDetails.gender": "$userDetails.gender",
+        "basicDetails.phoneNo": "$userDetails.phoneNo",
+        "basicDetails.registrationDate": "$userDetails.registrationDate",
+      },
+    },
+  ];
+
+  // Use aggregatePaginate for efficient pagination
   const studentsList = await Student.aggregatePaginate(
-    Student.aggregate([{ $match: filter }]), // Add filters if needed
+    Student.aggregate(aggregationPipeline),
     options
   );
 
@@ -611,33 +660,12 @@ const getStudentsList = asyncHandler(async (req, res) => {
     });
   }
 
-  if (studentsList?.docs?.length > 0) {
-    // Extract userIds from students list
-    const userIds = studentsList.docs.map((student) => student.userId);
-
-    // Fetch all user data in a single query
-    const users = await User.find({ _id: { $in: userIds } })
-      .select(
-        "_id fullName dateOfBirth phoneNo email avatar gender phone registrationDate"
-      ) // Fetch only necessary fields
-      .lean();
-
-    // Create a Map for fast lookup
-    const usersMap = new Map(users.map((user) => [user._id?.toString(), user]));
-
-    // Append user data to each student
-    studentsList.docs = studentsList.docs.map((student) => ({
-      ...student,
-      basicDetails: usersMap.get(student?.userId?.toString()) || null, // Attach user data
-    }));
-  }
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, studentsList, "Students List Fetched Successfully")
-    );
+  return res.status(200).json(
+    new ApiResponse(200, studentsList, "Students List Fetched Successfully")
+  );
 });
+
+
 
 const getStudentDetails = asyncHandler(async (req, res, next) => {
   const studentId = req.params.id;
@@ -772,5 +800,5 @@ export {
   getStudentsList,
   registerStudents,
   getStudentDetails,
-  deleteStudent
+  deleteStudent,
 };
