@@ -79,6 +79,34 @@ const getAcademicYearDetails = asyncHandler(async (req, res) => {
     );
 });
 
+const deleteAcademicyearById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    throw (400, new ApiError(400, null, "Academic year id is required"));
+  }
+  // Check if the class exists in any chapter
+  const academicYearInChapter = await Chapter.exists({
+    "academicYear.id": id,
+  });
+  console.log("academicYearInChapter", academicYearInChapter);
+  if (academicYearInChapter) {
+    throw new ApiError(
+      400,
+      "Cannot delete Academic Year as it is associated with a chapter"
+    );
+  }
+
+  const acdemicYear = await AcademicYear.deleteOne({ _id: id });
+  if (acdemicYear?.deletedCount === 0) {
+    throw new ApiError(400, "Academic Year does not exists");
+  }
+
+  console.log("acdemicYear", acdemicYear)
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Academic Year Deleted Successfully"));
+});
+
 const createSubjects = asyncHandler(async (req, res, next) => {
   const {
     name,
@@ -121,6 +149,34 @@ const getAllSubjects = asyncHandler(async (req, res, next) => {
     .json(new ApiResponse(200, subjects, "Subjects Feteched Sucessfully"));
 });
 
+const deleteSubjectById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    throw (400, new ApiError(400, null, "Class id is required"));
+  }
+  // Check if the class exists in any chapter
+  const subjectExistInChapter = await Chapter.findOne({
+    "subject.id": id,
+  });
+  console.log("subjectExistInChapter", subjectExistInChapter);
+  if (subjectExistInChapter) {
+    throw new ApiError(
+      400,
+      "Cannot delete Subject as it is associated with a chapter"
+    );
+  }
+
+  const deletedSubject = await Subject.deleteOne({ _id: id });
+  if (deletedSubject?.deletedCount === 0) {
+    throw new ApiError(400, "Subject does not exists");
+  }
+
+  console.log("deletedSubject", deletedSubject)
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Subject Deleted Successfully"));
+});
+
 const createClass = asyncHandler(async (req, res, next) => {
   const { name, alternateName, description, active, classGrade } = req.body;
   if (!name || !classGrade) {
@@ -153,6 +209,35 @@ const getAllClass = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, allClasses, "fetched class data successfully"));
+});
+
+const deleteClassById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    throw (400, new ApiError(400, null, "Class id is required"));
+  }
+  // Check if the class exists in any chapter
+  const classExistInChapter = await Chapter.findOne({
+    "class.id": id,
+  });
+  console.log("classExistInChapter", classExistInChapter);
+  if (classExistInChapter) {
+    throw new ApiError(
+      400,
+      "Cannot delete class as it is associated with a chapter"
+    );
+  }
+
+  const deletedClass = await Class.deleteOne({ _id: id });
+  console.log("deletedClass", deletedClass)
+  if (deletedClass?.deletedCount === 0) {
+    throw new ApiError(400, "Class does not exists");
+  }
+
+  
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Class Deleted Successfully"));
 });
 
 const createChapter = asyncHandler(async (req, res) => {
@@ -221,6 +306,9 @@ const getAllChapter = asyncHandler(async (req, res) => {
       new ApiResponse(200, chapterData, "chapter details fetched successfully")
     );
 });
+
+
+
 
 const addNotesTochapter = asyncHandler(async (req, res) => {
   const id = req.params.id;
@@ -344,10 +432,12 @@ const deleteChapterbyId = asyncHandler(async (req, res) => {
     throw (400, new ApiError(400, null, "Chapter id is required"));
   }
 
-  const deletChapter = await Chapter.deleteOne({_id:id})
-  if (!deletChapter) {
-    throw (400, new ApiError(404, null, "Not a valid ID"));
+  const deletChapter = await Chapter.deleteOne({ _id: id });
+  if (deletedSubject?.deletedCount === 0) {
+    throw (400, new ApiError(404, null, "Not a valid chapter ID"));
   }
+
+ 
 
   return res
     .status(200)
@@ -368,5 +458,8 @@ export {
   addVideoUrlToChapter,
   getChapterById,
   updateChapterById,
-  deleteChapterbyId
+  deleteChapterbyId,
+  deleteClassById,
+  deleteSubjectById,
+  deleteAcademicyearById
 };

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllAcademicYear, createSubjects, createAcademicYear, createClass, getAllClass, getAllSubjects, createChapter, addNotesTochapter, getAcademicYearDetails, addVideoUrlToChapter, getAllChapter, getChapterById, updateChapterById, deleteChapterbyId } from "../controllers/academic.controller.js";
+import { getAllAcademicYear, createSubjects, createAcademicYear, createClass, getAllClass, getAllSubjects, createChapter, addNotesTochapter, getAcademicYearDetails, addVideoUrlToChapter, getAllChapter, getChapterById, updateChapterById, deleteChapterbyId, deleteClassById, deleteSubjectById, deleteAcademicyearById } from "../controllers/academic.controller.js";
 
 
 const router = Router()
@@ -7,13 +7,16 @@ const router = Router()
 router.route("/academicYearBatch").post(createAcademicYear)
 router.route("/academicYearBatch").get(getAllAcademicYear)
 router.route("/academicYearBatch/:id").get(getAcademicYearDetails)
+router.route("/academicYearBatch/:id").delete(deleteAcademicyearById)
 // router.route("/academicYearBatch/:id").put(getAllAcademicYear)
 
 
 router.route("/subject").post(createSubjects)
 router.route("/subject").get(getAllSubjects)
+router.route("/subject/:id").delete(deleteSubjectById)
 router.route("/class").post(createClass)
 router.route("/class").get(getAllClass)
+router.route("/class/:id").delete(deleteClassById)
 router.route("/chapter").post(createChapter)
 router.route("/chapter").get(getAllChapter)
 router.route("/chapter/:id").get(getChapterById)
