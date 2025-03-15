@@ -78,6 +78,81 @@ const updateUserRoleById = asyncHandler(async (req, res) => {
   });
 });
 
+//email exists
+const checkEmailExists = asyncHandler(async (req, res) => {
+  const { email, phoneNo, userName } = req.body;
+
+  if (!email || email.trim() === "") {
+    throw new ApiError(404, "Email is required");
+  }
+
+  const existingUser = await User.findOne({
+    email: email,
+  });
+
+  console.log("existingUser", existingUser);
+
+  if (existingUser) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "data already exists"));
+  }
+
+  return res.status(200).json(new ApiResponse(200, null, "Email is available"));
+});
+
+//username exists
+
+const checkUserNameExists = asyncHandler(async (req, res) => {
+  const { userName } = req.body;
+
+  if (!userName || userName.trim() === "") {
+    throw new ApiError(404, "username is required");
+  }
+
+  const existingUser = await User.findOne({
+    userName: userName,
+  });
+
+  console.log("existingUser", existingUser);
+
+  if (existingUser) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "data already exists"));
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "User Name is available"));
+});
+//phoneno exists
+
+//email exists
+const checkPhoneNoExists = asyncHandler(async (req, res) => {
+  const { email, phoneNo, userName } = req.body;
+
+  if (!phoneNo || phoneNo.trim() === "") {
+    throw new ApiError(404, "phoneNo, phone, or username is required");
+  }
+
+  const existingUser = await User.findOne({
+    phoneNo: phoneNo,
+  });
+
+  console.log("existingUser", existingUser);
+
+  if (existingUser) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "data already exists"));
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "phoneNo is available"));
+});
+
 const registerUser = asyncHandler(async (req, res, next) => {
   const {
     userName,
@@ -589,8 +664,40 @@ const updateUserDetailsById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, userData, "updated data successfully"));
 });
 
+const checkStudentrollNoExists = asyncHandler(async (req, res) => {
+  const { studentId } = req.body;
+
+  if (!studentId || studentId.trim() === "") {
+    throw new ApiError(404, "studentId is required");
+  }
+
+  const existingUser = await Student.findOne({
+    studentId: studentId,
+  });
+
+  console.log("existingUser", existingUser);
+
+  if (existingUser) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "data already exists"));
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Student Id is available"));
+});
+
 const getStudentsList = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 100, gender, classId, studentId, fullName, active } = req.query;
+  const {
+    page = 1,
+    limit = 100,
+    gender,
+    classId,
+    studentId,
+    fullName,
+    active,
+  } = req.query;
 
   const options = {
     page: parseInt(page, 10),
@@ -605,7 +712,11 @@ const getStudentsList = asyncHandler(async (req, res) => {
 
   const userMatchQuery = {};
   if (gender) userMatchQuery["userDetails.gender"] = gender;
-  if (fullName) userMatchQuery["userDetails.fullName"] = { $regex: fullName, $options: "i" }; // Case-insensitive search
+  if (fullName)
+    userMatchQuery["userDetails.fullName"] = {
+      $regex: fullName,
+      $options: "i",
+    }; // Case-insensitive search
 
   // Aggregation pipeline
   const aggregationPipeline = [
@@ -620,7 +731,7 @@ const getStudentsList = asyncHandler(async (req, res) => {
     { $unwind: "$userDetails" }, // Flatten the userDetails array
     {
       $match: {
-        ...matchQuery,     // Filters on Student collection
+        ...matchQuery, // Filters on Student collection
         ...userMatchQuery, // Filters on User collection
       },
     },
@@ -660,12 +771,12 @@ const getStudentsList = asyncHandler(async (req, res) => {
     });
   }
 
-  return res.status(200).json(
-    new ApiResponse(200, studentsList, "Students List Fetched Successfully")
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, studentsList, "Students List Fetched Successfully")
+    );
 });
-
-
 
 const getStudentDetails = asyncHandler(async (req, res, next) => {
   const studentId = req.params.id;
@@ -801,4 +912,8 @@ export {
   registerStudents,
   getStudentDetails,
   deleteStudent,
+  checkEmailExists,
+  checkPhoneNoExists,
+  checkUserNameExists,
+  checkStudentrollNoExists,
 };
