@@ -44,9 +44,9 @@ router.route("/logout").post(verifyJWT, logoutUser);
 
 //get userslit
 router.route("/userList").get(verifyJWT, getUsers)
-router.route("/user/emailexist").post(checkEmailExists)
-router.route("/user/usernameexist").post(checkUserNameExists)
-router.route("/user/phoneexist").post(checkPhoneNoExists)
+router.route("/user/emailexist").get(checkEmailExists)
+router.route("/user/usernameexist").get(checkUserNameExists)
+router.route("/user/availablePhone").get(checkPhoneNoExists);
 
 //get data based on userid
 router.route("/user/:id").get(verifyJWT,getUserDetails);
@@ -58,7 +58,7 @@ router.route("/student").post( upload.fields([
     maxCount: 1,
   },
 ]), registerStudents)
-router.route("/student/rollnoexists").post(checkStudentrollNoExists)
+router.route("/student/rollnoexists").get(checkStudentrollNoExists)
 router.route("/student/:id").patch(updateStudentDetails); // Update student details by ID
 router.route("/student/:id").get(getStudentDetails); // Update student details by ID
 router.route("/student/:id").delete(deleteStudent);

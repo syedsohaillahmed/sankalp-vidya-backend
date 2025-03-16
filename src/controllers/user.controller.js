@@ -11,6 +11,7 @@ import { Teacher } from "../models/users/Teacher.model.js";
 import mongoose from "mongoose";
 import { AcademicYear } from "../models/academic/academicYear/academicYear.model.js";
 import { Class } from "../models/academic/class/class.model.js";
+import { exists } from "fs";
 
 const createUserRoles = asyncHandler(async (req, res, next) => {
   const { roleName, roleId, active } = req.body;
@@ -80,7 +81,7 @@ const updateUserRoleById = asyncHandler(async (req, res) => {
 
 //email exists
 const checkEmailExists = asyncHandler(async (req, res) => {
-  const { email, phoneNo, userName } = req.body;
+  const {email} = req.query
 
   if (!email || email.trim() === "") {
     throw new ApiError(404, "Email is required");
@@ -94,23 +95,24 @@ const checkEmailExists = asyncHandler(async (req, res) => {
 
   if (existingUser) {
     return res
-      .status(400)
-      .json(new ApiResponse(400, null, "data already exists"));
+      .status(200)
+      .json(new ApiResponse(200, {exists:true}, "data already exists"));
   }
 
-  return res.status(200).json(new ApiResponse(200, null, "Email is available"));
+  return res.status(200).json(new ApiResponse(200, {exists:false}, "Email is available"));
 });
 
 //username exists
 
 const checkUserNameExists = asyncHandler(async (req, res) => {
-  const { userName } = req.body;
+  const { userName } = req.query; 
+
 
   if (!userName || userName.trim() === "") {
     throw new ApiError(404, "username is required");
   }
 
-  const existingUser = await User.findOne({
+  const existingUser = await User.exists({
     userName: userName,
   });
 
@@ -118,25 +120,25 @@ const checkUserNameExists = asyncHandler(async (req, res) => {
 
   if (existingUser) {
     return res
-      .status(400)
-      .json(new ApiResponse(400, null, "data already exists"));
+      .status(200)
+      .json(new ApiResponse(200, { exists: true }, "data already exists"));
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, null, "User Name is available"));
+    .json(new ApiResponse(200, { exists: false }, "User Name is available"));
 });
 //phoneno exists
 
 //email exists
 const checkPhoneNoExists = asyncHandler(async (req, res) => {
-  const { email, phoneNo, userName } = req.body;
+  const { phoneNo } = req.query; // phoneNo will now come from query params
 
   if (!phoneNo || phoneNo.trim() === "") {
-    throw new ApiError(404, "phoneNo, phone, or username is required");
+    throw new ApiError(404, "phoneNo is required");
   }
 
-  const existingUser = await User.findOne({
+  const existingUser = await User.exists({
     phoneNo: phoneNo,
   });
 
@@ -144,14 +146,15 @@ const checkPhoneNoExists = asyncHandler(async (req, res) => {
 
   if (existingUser) {
     return res
-      .status(400)
-      .json(new ApiResponse(400, null, "data already exists"));
+      .status(200)
+      .json(new ApiResponse(200, { exists: true }, "data already exists"));
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, null, "phoneNo is available"));
+    .json(new ApiResponse(200, { exists: false }, "phoneNo is available"));
 });
+
 
 const registerUser = asyncHandler(async (req, res, next) => {
   const {
@@ -665,13 +668,13 @@ const updateUserDetailsById = asyncHandler(async (req, res) => {
 });
 
 const checkStudentrollNoExists = asyncHandler(async (req, res) => {
-  const { studentId } = req.body;
+  const { studentId } = req.query;
 
   if (!studentId || studentId.trim() === "") {
     throw new ApiError(404, "studentId is required");
   }
 
-  const existingUser = await Student.findOne({
+  const existingUser = await Student.exists({
     studentId: studentId,
   });
 
@@ -679,13 +682,13 @@ const checkStudentrollNoExists = asyncHandler(async (req, res) => {
 
   if (existingUser) {
     return res
-      .status(400)
-      .json(new ApiResponse(400, null, "data already exists"));
+      .status(200)
+      .json(new ApiResponse(200, {exists: true}, "data already exists"));
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, null, "Student Id is available"));
+    .json(new ApiResponse(200, {exists: false}, "Student Id is available"));
 });
 
 const getStudentsList = asyncHandler(async (req, res) => {
