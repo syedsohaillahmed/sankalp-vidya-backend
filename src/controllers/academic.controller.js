@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Class } from "../models/academic/class/class.model.js";
 import { AcademicYear } from "../models/academic/academicYear/academicYear.model.js";
 import { Chapter } from "../models/academic/subjects/chapter.model.js";
+import { Student } from "../models/users/student.model.js";
 
 const createAcademicYear = asyncHandler(async (req, res, next) => {
   const { academicYear, batchCode, batchName, startDate, endDate, active } =
@@ -96,12 +97,23 @@ const deleteAcademicyearById = asyncHandler(async (req, res) => {
     );
   }
 
+  const academicYearInStudent = await Student.exists({
+    "academicYear.id": id,
+  });
+
+  if (academicYearInStudent) {
+    throw new ApiError(
+      400,
+      "Cannot delete Academic Year as it is associated with a Student"
+    );
+  }
+
   const acdemicYear = await AcademicYear.deleteOne({ _id: id });
   if (acdemicYear?.deletedCount === 0) {
     throw new ApiError(400, "Academic Year does not exists");
   }
 
-  console.log("acdemicYear", acdemicYear)
+  console.log("acdemicYear", acdemicYear);
   return res
     .status(200)
     .json(new ApiResponse(200, null, "Academic Year Deleted Successfully"));
@@ -155,7 +167,7 @@ const deleteSubjectById = asyncHandler(async (req, res) => {
     throw (400, new ApiError(400, null, "Class id is required"));
   }
   // Check if the class exists in any chapter
-  const subjectExistInChapter = await Chapter.findOne({
+  const subjectExistInChapter = await Chapter.exists({
     "subject.id": id,
   });
   console.log("subjectExistInChapter", subjectExistInChapter);
@@ -171,7 +183,7 @@ const deleteSubjectById = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Subject does not exists");
   }
 
-  console.log("deletedSubject", deletedSubject)
+  console.log("deletedSubject", deletedSubject);
   return res
     .status(200)
     .json(new ApiResponse(200, null, "Subject Deleted Successfully"));
@@ -217,9 +229,13 @@ const deleteClassById = asyncHandler(async (req, res) => {
     throw (400, new ApiError(400, null, "Class id is required"));
   }
   // Check if the class exists in any chapter
-  const classExistInChapter = await Chapter.findOne({
+  const classExistInChapter = await Chapter.exists({
     "class.id": id,
   });
+
+  const classExistingStudent = await Student.exists({
+    "class.id": id,
+  })
   console.log("classExistInChapter", classExistInChapter);
   if (classExistInChapter) {
     throw new ApiError(
@@ -228,13 +244,19 @@ const deleteClassById = asyncHandler(async (req, res) => {
     );
   }
 
+  if (classExistingStudent) {
+    throw new ApiError(
+      400,
+      "Cannot delete class as it is associated with a Student"
+    );
+  }
+
   const deletedClass = await Class.deleteOne({ _id: id });
-  console.log("deletedClass", deletedClass)
+  console.log("deletedClass", deletedClass);
   if (deletedClass?.deletedCount === 0) {
     throw new ApiError(400, "Class does not exists");
   }
 
-  
   return res
     .status(200)
     .json(new ApiResponse(200, null, "Class Deleted Successfully"));
@@ -306,9 +328,6 @@ const getAllChapter = asyncHandler(async (req, res) => {
       new ApiResponse(200, chapterData, "chapter details fetched successfully")
     );
 });
-
-
-
 
 const addNotesTochapter = asyncHandler(async (req, res) => {
   const id = req.params.id;
@@ -428,16 +447,18 @@ const updateChapterById = asyncHandler(async (req, res) => {
 
 const deleteChapterbyId = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  console.log("id", id);
+
   if (!id) {
     throw (400, new ApiError(400, null, "Chapter id is required"));
   }
-
+  console.log("request came here");
   const deletChapter = await Chapter.deleteOne({ _id: id });
-  if (deletedSubject?.deletedCount === 0) {
+  if (deletChapter?.deletedCount === 0) {
     throw (400, new ApiError(404, null, "Not a valid chapter ID"));
   }
 
- 
+  console.log("deletechapter", deletChapter)
 
   return res
     .status(200)
@@ -461,5 +482,5 @@ export {
   deleteChapterbyId,
   deleteClassById,
   deleteSubjectById,
-  deleteAcademicyearById
+  deleteAcademicyearById,
 };
