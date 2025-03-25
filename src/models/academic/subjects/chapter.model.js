@@ -1,4 +1,5 @@
 import { model, Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const chapterSchema = new Schema(
   {
@@ -73,7 +74,7 @@ const chapterSchema = new Schema(
         },
       },
     ],
-    videos: {
+    videos:[ {
       videoEmbededLink: {
         type: String,
       },
@@ -98,7 +99,7 @@ const chapterSchema = new Schema(
       videoUploadedToSourceDate: {
         type: Date,
       },
-    },
+    }],
     publishedDate: {
       type: Date,
       default: Date.now,
@@ -116,5 +117,7 @@ const chapterSchema = new Schema(
     timestamps: true,
   }
 );
+
+chapterSchema.plugin(mongooseAggregatePaginate);
 
 export const Chapter = model("Chapter", chapterSchema);

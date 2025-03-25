@@ -321,7 +321,16 @@ const createChapter = asyncHandler(async (req, res) => {
 });
 
 const getAllChapter = asyncHandler(async (req, res) => {
-  const chapterData = await Chapter.find();
+  const {classId} = req.query;
+
+  let filter ={}
+  if(classId){
+
+    filter ={"class.id": classId}
+  }
+  
+  const chapterData = await Chapter.find(filter);
+  console.log("chapterData", chapterData)
   return res
     .status(200)
     .json(
@@ -386,7 +395,9 @@ const addVideoUrlToChapter = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Chapter not found");
   }
 
-  chapter.videos = {
+  console.log("initial chapter", chapter)
+
+  chapter.videos.push({
     videoEmbededLink: videoEmbededLink || chapter.videos?.videoEmbededLink,
     title: title || chapter.videos?.title,
     description: description || chapter.videos?.description,
@@ -396,9 +407,12 @@ const addVideoUrlToChapter = asyncHandler(async (req, res) => {
     uploadDate: new Date(), // Set the current date as the upload date
     videoUploadedToSourceDate:
       chapter.videos?.videoUploadedToSourceDate || new Date(),
-  };
+  });
+  console.log("chapterafter", chapter)
 
   const chapterData = await chapter.save();
+
+  console.log("chapter", chapterData)
 
   res
     .status(200)
