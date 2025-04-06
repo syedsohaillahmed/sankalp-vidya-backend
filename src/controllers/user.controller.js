@@ -532,6 +532,14 @@ const loginUser = asyncHandler(async (req, res) => {
     "roleDisplayName"
   );
 
+  let additionalData =[]
+
+  if(roleDetails?.roleDisplayName === "Student"){
+   const studentData = await Student.find({userId: userData._id})
+   console.log("studentData", studentData)
+   additionalData=studentData
+  }
+
   const options = {
     httpOnly: true,
     secure: true,
@@ -547,6 +555,7 @@ const loginUser = asyncHandler(async (req, res) => {
         {
           user: loggedInuser,
           roleDetails,
+          additionalData,
           refreshToken,
           accessToken,
         },

@@ -6,6 +6,7 @@ import { Class } from "../models/academic/class/class.model.js";
 import { AcademicYear } from "../models/academic/academicYear/academicYear.model.js";
 import { Chapter } from "../models/academic/subjects/chapter.model.js";
 import { Student } from "../models/users/student.model.js";
+import { YtVideoAttendance } from "../models/academic/subjects/ytVideoAttendence.model.js";
 
 const createAcademicYear = asyncHandler(async (req, res, next) => {
   const { academicYear, batchCode, batchName, startDate, endDate, active } =
@@ -235,7 +236,7 @@ const deleteClassById = asyncHandler(async (req, res) => {
 
   const classExistingStudent = await Student.exists({
     "class.id": id,
-  })
+  });
   console.log("classExistInChapter", classExistInChapter);
   if (classExistInChapter) {
     throw new ApiError(
@@ -321,21 +322,60 @@ const createChapter = asyncHandler(async (req, res) => {
 });
 
 const getAllChapter = asyncHandler(async (req, res) => {
-  const {classId} = req.query;
+  const { classId, studentId } = req.query;
 
-  let filter ={}
-  if(classId){
-
-    filter ={"class.id": classId}
+  // Validate studentId is provided
+  if (!studentId) {
+    return res.status(400).json({
+      message: 'studentId is required'
+    });
   }
-  
-  const chapterData = await Chapter.find(filter);
-  console.log("chapterData", chapterData)
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, chapterData, "chapter details fetched successfully")
-    );
+
+  let filter = {};
+  if (classId) {
+    filter = { "class.id": classId };
+  }
+
+  // Get all chapters
+  const chapters = await Chapter.find(filter).lean();
+
+  // Get all video IDs from all chapters
+  const allVideoIds = chapters.flatMap(chapter => 
+    chapter.videos.map(video => video._id.toString())
+  );
+
+  // Get attendance records for these videos and the student
+  const attendanceRecords = await YtVideoAttendance.find({
+    "video.id": { $in: allVideoIds },
+    "student.id": studentId
+  });
+
+  // Create a map of videoId to attendance status for quick lookup
+  const attendanceMap = new Map();
+  attendanceRecords.forEach(record => {
+    attendanceMap.set(record.video.id.toString(), {
+      watched: true,
+      watchedAt: record.watchedAt,
+      completed: record.completed
+    });
+  });
+
+  // Enhance chapters with attendance status
+  const enhancedChapters = chapters.map(chapter => ({
+    ...chapter,
+    videos: chapter.videos.map(video => ({
+      ...video,
+      attendance: attendanceMap.get(video._id.toString()) || {
+        watched: false,
+        watchedAt: null,
+        completed: false
+      }
+    }))
+  }));
+
+  return res.status(200).json(
+    new ApiResponse(200, enhancedChapters, "Chapter details with attendance fetched successfully")
+  );
 });
 
 const addNotesTochapter = asyncHandler(async (req, res) => {
@@ -372,54 +412,258 @@ const addNotesTochapter = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, updatedChapter, "Successfully added notes"));
 });
 
+// const addVideoUrlToChapter = asyncHandler(async (req, res) => {
+//   const { id } = req.params;
+//   const { videoEmbededLink, title, description, videoUrl, videoSource, author } = req.body;
+
+//   // Validation (same as before)
+//   if (!id) throw new ApiError(400, "Chapter ID is required");
+//   if (!videoUrl || !title) throw new ApiError(400, "Video URL and Title are required");
+
+//   const chapter = await Chapter.findById(id);
+//   if (!chapter) throw new ApiError(404, "Chapter not found");
+
+//   const newVideo = {
+//     videoEmbededLink,
+//     title,
+//     description,
+//     videoUrl,
+//     videoSource,
+//     author,
+//     uploadDate: new Date(),
+//     videoUploadedToSourceDate: new Date(),
+//   };
+
+//   chapter.videos.push(newVideo);
+//   const updatedChapter = await chapter.save();
+//   console.log("updatedChapter", updatedChapter)
+
+//   // Create attendance record for this video (without students)
+//   const attendanceRecord = new YtVideoAttendance({
+//     video: {
+//       id: updatedChapter._id,
+//       title: updatedChapter.title,
+//       videoUrl: updatedChapter.videoUrl,
+//       uploadDate: updatedChapter.uploadDate
+//     },
+//     chapter: {
+//       id: chapter._id,
+//       name: chapter.name
+//     },
+//     class: {
+//       id: chapter.class.id,
+//       name: chapter.class.name
+//     },
+//     students: [] // Empty array to be populated later
+//   });
+
+//   await attendanceRecord.save();
+
+//   res.status(200).json(
+//     new ApiResponse(200, updatedChapter, "Video added to chapter successfully")
+//   );
+// });
+
+
 const addVideoUrlToChapter = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const {
+  const { videoEmbededLink, title, description, videoUrl, videoSource, author } = req.body;
+
+  // Validation (same as before)
+  if (!id) throw new ApiError(400, "Chapter ID is required");
+  if (!videoUrl || !title) throw new ApiError(400, "Video URL and Title are required");
+
+  const chapter = await Chapter.findById(id);
+  if (!chapter) throw new ApiError(404, "Chapter not found");
+
+  const newVideo = {
     videoEmbededLink,
     title,
     description,
     videoUrl,
     videoSource,
     author,
-  } = req.body;
-  if (!id) {
-    throw new ApiError(400, "Chapter ID is required");
-  }
+    uploadDate: new Date(),
+    videoUploadedToSourceDate: new Date(),
+  };
 
-  if (!videoUrl || !title) {
-    throw new ApiError(400, "Video URL and Title are required");
-  }
+  chapter.videos.push(newVideo);
+  const updatedChapter = await chapter.save();
+  console.log("updatedChapter", updatedChapter);
 
-  const chapter = await Chapter.findById(id);
-  if (!chapter) {
-    throw new ApiError(404, "Chapter not found");
-  }
+  // Get the latest added video (last element of the array)
+  const latestVideo = updatedChapter.videos[updatedChapter.videos.length - 1];
 
-  console.log("initial chapter", chapter)
-
-  chapter.videos.push({
-    videoEmbededLink: videoEmbededLink || chapter.videos?.videoEmbededLink,
-    title: title || chapter.videos?.title,
-    description: description || chapter.videos?.description,
-    videoUrl: videoUrl || chapter.videos?.videoUrl,
-    videoSource: videoSource || chapter.videos?.videoSource,
-    author: author || chapter.videos?.author,
-    uploadDate: new Date(), // Set the current date as the upload date
-    videoUploadedToSourceDate:
-      chapter.videos?.videoUploadedToSourceDate || new Date(),
+  // Create attendance record for this video (without students)
+  const attendanceRecord = new YtVideoAttendance({
+    video: {
+      id: latestVideo._id,
+      title: latestVideo.title,
+      videoUrl: latestVideo.videoUrl,
+      uploadDate: latestVideo.uploadDate,
+    },
+    chapter: {
+      id: chapter._id,
+      name: chapter.name,
+    },
+    class: {
+      id: chapter.class.id,
+      name: chapter.class.name,
+    },
+    students: [], // Empty array to be populated later
   });
-  console.log("chapterafter", chapter)
 
-  const chapterData = await chapter.save();
+  await attendanceRecord.save();
 
-  console.log("chapter", chapterData)
-
-  res
-    .status(200)
-    .json(
-      new ApiResponse(200, chapterData, "Successfully updloaded video data")
-    );
+  res.status(200).json(
+    new ApiResponse(200, updatedChapter, "Video added to chapter successfully")
+  );
 });
+
+
+
+// const markVideoAttendance = asyncHandler(async (req, res) => {
+//   const { videoId, studentId } = req.params;
+
+//   console.log("videoId", videoId)
+//   console.log("studentId", studentId)
+
+
+//   // Validate IDs
+//   // if (!isValidObjectId(videoId) || !isValidObjectId(studentId)) {
+//   //   throw new ApiError(400, "Invalid ID format");
+//   // }
+
+//   // Find student
+//   const student = await Student.findById(studentId).select("name classGrade");
+//   if (!student) {
+//     throw new ApiError(404, "Student not found");
+//   }
+
+//   // Find or create attendance record for this video
+//   let attendanceRecord = await YtVideoAttendance.findOne({ "video.id": videoId });
+
+//   console.log("attendanceRecord", attendanceRecord)
+
+//   if (!attendanceRecord) {
+//     // Create new record if doesn't exist
+//     attendanceRecord = new YtVideoAttendance({
+//       video: { id: videoId },
+//       student: []
+//     });
+//   }
+
+//   // Check if student already marked attendance
+//   const existingAttendance = attendanceRecord?.student?.find(
+//     (s) => s.student.id.toString() === studentId
+//   );
+
+//   if (existingAttendance) {
+//     throw new ApiError(400, "Attendance already marked");
+//   }
+
+//   // Add basic attendance record
+//   attendanceRecord?.students?.push({
+//     student: {
+//       id: student._id,
+//       name: student.name,
+//       classGrade: student.classGrade
+//     },
+//     watchedAt: new Date()
+//   });
+
+//   await attendanceRecord.save();
+
+//   return res
+//     .status(200)
+//     .json(
+//       new ApiResponse(200, { success: true }, "Attendance marked successfully")
+//     );
+// });
+const markVideoAttendance = asyncHandler(async (req, res) => {
+  const { videoId, studentId } = req.params;
+
+  // Validate student exists
+  const student = await Student.findById(studentId);
+  console.log("student", student)
+  if (!student) {
+    throw new ApiError(404, "Student not found");
+  }
+
+  // Find or create attendance record
+  let attendance = await YtVideoAttendance.findOne({"video.id": videoId });
+  console.log("attendance", attendance)
+
+  // if (!attendance) {
+  //   attendance = new YtVideoAttendance({
+  //     video:{
+  //       id:videoId},
+  //     student: []
+  //   });
+  // }
+
+  // Check if already attended
+  if (attendance?.student?.some(s => s.id.toString() === student._id.toString())) {
+    throw new ApiError(400, "Attendance already marked");
+  }
+
+  // Add student to array
+  attendance?.student?.push({id:student._id,  classGrade:student.classGrade});
+  await attendance.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Attendance marked successfully"));
+});
+
+
+// const addVideoUrlToChapter = asyncHandler(async (req, res) => {
+//   const { id } = req.params;
+//   const {
+//     videoEmbededLink,
+//     title,
+//     description,
+//     videoUrl,
+//     videoSource,
+//     author,
+//   } = req.body;
+
+//   if (!id) {
+//     throw new ApiError(400, "Chapter ID is required");
+//   }
+
+//   if (!videoUrl || !title) {
+//     throw new ApiError(400, "Video URL and Title are required");
+//   }
+
+//   const chapter = await Chapter.findById(id);
+//   if (!chapter) {
+//     throw new ApiError(404, "Chapter not found");
+//   }
+
+//   // Ensure chapter.videos is initialized as an array if it's undefined.
+//   if (!chapter.videos) {
+//     chapter.videos = [];
+//   }
+
+//   // Add the new video object to the videos array.
+//   chapter.videos.push({
+//     videoEmbededLink: videoEmbededLink,
+//     title: title,
+//     description: description,
+//     videoUrl: videoUrl,
+//     videoSource: videoSource,
+//     author: author,
+//     uploadDate: new Date(),
+//     videoUploadedToSourceDate: new Date(),
+//   });
+
+//   const chapterData = await chapter.save();
+
+//   res
+//     .status(200)
+//     .json(new ApiResponse(200, chapterData, "Successfully uploaded video data"));
+// });
 
 const getChapterById = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -472,12 +716,168 @@ const deleteChapterbyId = asyncHandler(async (req, res) => {
     throw (400, new ApiError(404, null, "Not a valid chapter ID"));
   }
 
-  console.log("deletechapter", deletChapter)
+  console.log("deletechapter", deletChapter);
 
   return res
     .status(200)
     .json(new ApiResponse(200, deletChapter, "Successfully deleted chapter"));
 });
+
+const getChapterYTVideos = asyncHandler(async (req, res) => {
+  const { chapterId, videoId } = req.params;
+
+  const chapter = await Chapter.findById(chapterId);
+  if (!chapter) {
+    return res.status(404).json({ message: "Chapter not found" });
+  }
+
+  const video = chapter.videos.find((v) => v._id.toString() === videoId);
+
+  if (!video) {
+    return res.status(404).json({ message: "Video not found in this chapter" });
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "videos Successfully fetched"));
+});
+
+const updateChapterYtVideo = asyncHandler ( async (req, res)=>{
+  const { chapterId, videoId } = req.params;
+  const updateData = req.body; // Fields to be updated
+
+  // 1️⃣ Find the chapter
+  const chapter = await Chapter.findById(chapterId);
+  if (!chapter) {
+    return res.status(404).json({ message: "Chapter not found" });
+  }
+
+  // 2️⃣ Find the index of the video in the `videos` array
+  const videoIndex = chapter.videos.findIndex((v) => v._id.toString() === videoId);
+
+  if (videoIndex === -1) {
+    return res.status(404).json({ message: "Video not found in this chapter" });
+  }
+
+  // 3️⃣ Update the video details (only provided fields)
+  Object.keys(updateData).forEach((key) => {
+    chapter.videos[videoIndex][key] = updateData[key];
+  });
+
+  // 4️⃣ Save the updated chapter
+  await chapter.save();
+
+  return res.status(200).json( new ApiResponse(200,  chapter.videos[videoIndex], "Successfully updated video details" ));
+
+
+} )
+
+const postAttenedenceYtVideos = asyncHandler(async(req, res)=>{
+  const {
+    student,
+    class: classInfo,
+    chapter,
+    video,
+    watchedAt,
+    durationWatched,
+    completed,
+    watched,
+  } = req.body;
+
+  const existingAttendance = await YtVideoAttendance.findOne({
+    "student.id": student.id,
+    "video.id": video.id,
+  });
+
+
+
+  if (existingAttendance) {
+    return res.status(400).json({ message: 'Attendance already marked for this video by this student.' });
+  }
+
+  // Create a new document using the YtVideoAttendance model
+  const newAttendance = new YtVideoAttendance({
+    student,
+    class: classInfo,
+    chapter,
+    video,
+    watchedAt,
+    durationWatched,
+    completed,
+    watched,
+  });
+
+  // Save the document to the database
+  await newAttendance.save();
+
+  // Return success response
+  res.status(201).json({ message: 'Attendance recorded successfully', data: newAttendance });
+
+  });
+
+  const getYtVideoAttendanceListbasedOnVid = asyncHandler (async(req, res)=>{
+    const { videoId } = req.params; // Extract videoId from request parameters
+
+    
+      // Query attendance records based on the video ID
+      const attendanceRecords = await YtVideoAttendance.find({ "video.id": videoId });
+      console.log("attendanceRecords", attendanceRecords)
+  
+      // If no records found for the given video ID
+      if (!attendanceRecords) {
+        return res.status(404).json({ message: 'No attendance records found for this video.' });
+      }
+  
+      // Return the attendance records for the given video ID
+      res.status(200).json({ message: 'Attendance records found', data: attendanceRecords });
+  })
+  const checkStudentVideoAttendance = asyncHandler(async (req, res) => {
+    const { videoId, studentId } = req.params;
+  
+    // Validate the input parameters
+    if (!videoId || !studentId) {
+      return res.status(400).json({
+        message: 'Both videoId and studentId are required parameters'
+      });
+    }
+  
+    try {
+      // Query attendance records for the specific video and student
+      const attendanceRecord = await YtVideoAttendance.findOne({
+        "video.id": videoId,
+        "student.id": studentId
+      });
+
+      console.log("attendanceRecord", attendanceRecord)
+  
+      if (!attendanceRecord) {
+        // No record found means student hasn't watched the video
+        return res.status(200).json({
+          message: 'Attendance record not found',
+          watched: false,
+          data: null
+        });
+      }
+  
+      // Return whether the student has watched the video
+      res.status(200).json({
+        message: 'Attendance record found',
+        watched: true,
+        data: {
+          watchedAt: attendanceRecord.watchedAt,
+          completed: attendanceRecord.completed,
+          durationWatched: attendanceRecord.durationWatched
+        }
+      });
+  
+    } catch (error) {
+      console.error('Error checking student video attendance:', error);
+      res.status(500).json({
+        message: 'Error checking attendance record',
+        error: error.message
+      });
+    }
+  });
 
 export {
   createAcademicYear,
@@ -497,4 +897,10 @@ export {
   deleteClassById,
   deleteSubjectById,
   deleteAcademicyearById,
+  getChapterYTVideos,
+  updateChapterYtVideo,
+  postAttenedenceYtVideos,
+  getYtVideoAttendanceListbasedOnVid,
+  markVideoAttendance,
+  checkStudentVideoAttendance
 };

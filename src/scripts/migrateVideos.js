@@ -16,7 +16,6 @@ const migrateVideosToArray = async () => {
 
     // Find all chapters where videos is an object
     const chapters = await Chapter.find();
-    console.log("chapters", chapters)
 
     if (chapters.length === 0) {
       console.log("No chapters need migration.");
